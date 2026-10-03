@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>How to use Django’s Content Security Policy &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../_static/default.css?v=bf4d74af" />
+    <script src="../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="How to use Django’s CSRF protection" href="csrf.html" />
+    <link rel="prev" title="How to authenticate using REMOTE_USER" href="auth-remote-user.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Module index" href="../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="auth-remote-user.html" title="How to authenticate using &lt;code class=&#34;docutils literal notranslate&#34;&gt;&lt;span class=&#34;pre&#34;&gt;REMOTE_USER&lt;/span&gt;&lt;/code&gt;">previous</a>
+     |
+    <a href="index.html" title="How-to guides" accesskey="U">up</a>
+   |
+    <a href="csrf.html" title="How to use Django’s CSRF protection">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="howto-csp">
+            
+  <section id="s-how-to-use-django-s-content-security-policy">
+<span id="how-to-use-django-s-content-security-policy"></span><h1>How to use Django’s Content Security Policy<a class="headerlink" href="#how-to-use-django-s-content-security-policy" title="Link to this heading">¶</a></h1>
+<section id="s-basic-config">
+<span id="s-csp-config"></span><span id="basic-config"></span><span id="csp-config"></span><h2>Basic config<a class="headerlink" href="#basic-config" title="Link to this heading">¶</a></h2>
+<p>To enable Content Security Policy (CSP) in your Django project:</p>
+<ol class="arabic">
+<li><p>Add the CSP middleware to your <a class="reference internal" href="../ref/settings.html#std-setting-MIDDLEWARE"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MIDDLEWARE</span></code></a> setting:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MIDDLEWARE</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># ...</span>
+    <span class="s2">&quot;django.middleware.csp.ContentSecurityPolicyMiddleware&quot;</span><span class="p">,</span>
+    <span class="c1"># ...</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</li>
+<li><p>Configure the CSP policies in your <code class="docutils literal notranslate"><span class="pre">settings.py</span></code> using either
+<a class="reference internal" href="../ref/settings.html#std-setting-SECURE_CSP"><code class="xref std std-setting docutils literal notranslate"><span class="pre">SECURE_CSP</span></code></a> or <a class="reference internal" href="../ref/settings.html#std-setting-SECURE_CSP_REPORT_ONLY"><code class="xref std std-setting docutils literal notranslate"><span class="pre">SECURE_CSP_REPORT_ONLY</span></code></a> (or both). The
+<a class="reference internal" href="../ref/csp.html#csp-settings"><span class="std std-ref">CSP Settings docs</span></a> provide more details about the
+differences between these two:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.csp</span><span class="w"> </span><span class="kn">import</span> <span class="n">CSP</span>
+
+<span class="c1"># To enforce a CSP policy:</span>
+<span class="n">SECURE_CSP</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;default-src&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">CSP</span><span class="o">.</span><span class="n">SELF</span><span class="p">],</span>
+    <span class="c1"># Add more directives to be enforced.</span>
+<span class="p">}</span>
+
+<span class="c1"># Or for report-only mode:</span>
+<span class="n">SECURE_CSP_REPORT_ONLY</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;default-src&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">CSP</span><span class="o">.</span><span class="n">SELF</span><span class="p">],</span>
+    <span class="c1"># Add more directives as needed.</span>
+    <span class="s2">&quot;report-uri&quot;</span><span class="p">:</span> <span class="s2">&quot;/path/to/reports-endpoint/&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="s-nonce-config">
+<span id="s-csp-nonce-config"></span><span id="nonce-config"></span><span id="csp-nonce-config"></span><h2>Nonce config<a class="headerlink" href="#nonce-config" title="Link to this heading">¶</a></h2>
+<p>To use nonces in your CSP policy, beside the basic config, you need to:</p>
+<ol class="arabic">
+<li><p>Include the <a class="reference internal" href="../ref/csp.html#django.utils.csp.CSP.NONCE" title="django.utils.csp.CSP.NONCE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">NONCE</span></code></a> placeholder value in the CSP
+settings. This only applies to <code class="docutils literal notranslate"><span class="pre">script-src</span></code> or <code class="docutils literal notranslate"><span class="pre">style-src</span></code> directives:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.csp</span><span class="w"> </span><span class="kn">import</span> <span class="n">CSP</span>
+
+<span class="n">SECURE_CSP</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;default-src&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">CSP</span><span class="o">.</span><span class="n">SELF</span><span class="p">],</span>
+    <span class="c1"># Allow self-hosted scripts and script tags with matching `nonce` attr.</span>
+    <span class="s2">&quot;script-src&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">CSP</span><span class="o">.</span><span class="n">SELF</span><span class="p">,</span> <span class="n">CSP</span><span class="o">.</span><span class="n">NONCE</span><span class="p">],</span>
+    <span class="c1"># Example of the less secure &#39;unsafe-inline&#39; option.</span>
+    <span class="s2">&quot;style-src&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">CSP</span><span class="o">.</span><span class="n">SELF</span><span class="p">,</span> <span class="n">CSP</span><span class="o">.</span><span class="n">UNSAFE_INLINE</span><span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</li>
+<li><p>Add the <a class="reference internal" href="../ref/templates/api.html#django.template.context_processors.csp" title="django.template.context_processors.csp"><code class="xref py py-func docutils literal notranslate"><span class="pre">csp()</span></code></a> context processor to
+your <a class="reference internal" href="../ref/settings.html#std-setting-TEMPLATES"><code class="xref std std-setting docutils literal notranslate"><span class="pre">TEMPLATES</span></code></a> setting. This makes the generated nonce value
+available in the Django templates as the <code class="docutils literal notranslate"><span class="pre">csp_nonce</span></code> context variable:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">TEMPLATES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;BACKEND&quot;</span><span class="p">:</span> <span class="s2">&quot;django.template.backends.django.DjangoTemplates&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;OPTIONS&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;context_processors&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="c1"># ...</span>
+                <span class="s2">&quot;django.template.context_processors.csp&quot;</span><span class="p">,</span>
+            <span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</li>
+<li><p>In your templates, add the nonce to elements that require it:</p>
+<p>For inline <code class="docutils literal notranslate"><span class="pre">&lt;style&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;script&gt;</span></code> tags, use the <code class="docutils literal notranslate"><span class="pre">csp_nonce</span></code> context
+variable directly:</p>
+<div class="highlight-html+django notranslate"><div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">style</span> <span class="na">nonce</span><span class="o">=</span><span class="s">&quot;</span><span class="cp">{{</span> <span class="nv">csp_nonce</span> <span class="cp">}}</span><span class="s">&quot;</span><span class="p">&gt;</span>
+<span class="w">  </span><span class="c">/* These inline styles will be allowed. */</span>
+<span class="p">&lt;/</span><span class="nt">style</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">nonce</span><span class="o">=</span><span class="s">&quot;</span><span class="cp">{{</span> <span class="nv">csp_nonce</span> <span class="cp">}}</span><span class="s">&quot;</span><span class="p">&gt;</span>
+<span class="w">  </span><span class="c1">// This inline JavaScript will be allowed.</span>
+<span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+<p>For external <code class="docutils literal notranslate"><span class="pre">&lt;script</span> <span class="pre">src=&quot;...&quot;&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">&lt;link</span> <span class="pre">rel=&quot;stylesheet&quot;&gt;</span></code>
+elements, use the <a class="reference internal" href="../ref/templates/builtins.html#std-templatetag-csp_nonce_attr"><code class="xref std std-ttag docutils literal notranslate"><span class="pre">csp_nonce_attr</span></code></a> template tag:</p>
+<div class="highlight-html+django notranslate"><div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;/path/to/script.js&quot;</span> <span class="cp">{%</span> <span class="k">csp_nonce_attr</span> <span class="cp">%}</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">&quot;stylesheet&quot;</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;/path/to/style.css&quot;</span> <span class="cp">{%</span> <span class="k">csp_nonce_attr</span> <span class="cp">%}</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+<p>To render a <a class="reference internal" href="../topics/forms/media.html#django.forms.Media" title="django.forms.Media"><code class="xref py py-class docutils literal notranslate"><span class="pre">Media</span></code></a> object’s assets with the nonce
+applied to each element, pass the object to the <a class="reference internal" href="../ref/templates/builtins.html#std-templatetag-csp_nonce_attr"><code class="xref std std-ttag docutils literal notranslate"><span class="pre">csp_nonce_attr</span></code></a> tag:</p>
+<div class="highlight-html+django notranslate"><div class="highlight"><pre><span></span><span class="cp">{%</span> <span class="k">csp_nonce_attr</span> <span class="nv">form.media</span> <span class="cp">%}</span>
+</pre></div>
+</div>
+<div class="versionchanged">
+<span class="title">Changed in Django 6.1:</span> <p>The <a class="reference internal" href="../ref/templates/builtins.html#std-templatetag-csp_nonce_attr"><code class="xref std std-ttag docutils literal notranslate"><span class="pre">csp_nonce_attr</span></code></a> template tag was added, including support for
+rendering <a class="reference internal" href="../topics/forms/media.html#django.forms.Media" title="django.forms.Media"><code class="xref py py-class docutils literal notranslate"><span class="pre">Media</span></code></a> objects.</p>
+</div>
+</li>
+</ol>
+<div class="admonition-caching-and-nonce-reuse admonition">
+<p class="admonition-title">Caching and Nonce Reuse</p>
+<p>The <a class="reference internal" href="../ref/middleware.html#django.middleware.csp.ContentSecurityPolicyMiddleware" title="django.middleware.csp.ContentSecurityPolicyMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">ContentSecurityPolicyMiddleware</span></code></a>
+automatically handles generating a unique nonce and inserting the
+appropriate <code class="docutils literal notranslate"><span class="pre">nonce-&lt;value&gt;</span></code> source expression into the
+<code class="docutils literal notranslate"><span class="pre">Content-Security-Policy</span></code> (or <code class="docutils literal notranslate"><span class="pre">Content-Security-Policy-Report-Only</span></code>)
+header when the nonce is used in a template.</p>
+<p>To ensure correct behavior, make sure both the HTML and the header are
+generated within the same request and not served from cache. See the
+reference documentation on <a class="reference internal" href="../ref/csp.html#csp-nonce"><span class="std std-ref">Nonce usage</span></a> for implementation details and
+important caching considerations.</p>
+</div>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">How to use Django’s Content Security Policy</a><ul>
+<li><a class="reference internal" href="#basic-config">Basic config</a></li>
+<li><a class="reference internal" href="#nonce-config">Nonce config</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="auth-remote-user.html"
+                          title="previous chapter">How to authenticate using <code class="docutils literal notranslate"><span class="pre">REMOTE_USER</span></code></a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="csrf.html"
+                          title="next chapter">How to use Django’s CSRF protection</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/howto/csp.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="auth-remote-user.html" title="How to authenticate using &lt;code class=&#34;docutils literal notranslate&#34;&gt;&lt;span class=&#34;pre&#34;&gt;REMOTE_USER&lt;/span&gt;&lt;/code&gt;">previous</a>
+     |
+    <a href="index.html" title="How-to guides" accesskey="U">up</a>
+   |
+    <a href="csrf.html" title="How to use Django’s CSRF protection">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

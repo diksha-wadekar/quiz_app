@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Django 6.0.6 release notes &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../_static/default.css?v=bf4d74af" />
+    <script src="../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Django 6.0.5 release notes" href="6.0.5.html" />
+    <link rel="prev" title="Django 6.0.7 release notes" href="6.0.7.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Module index" href="../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="6.0.7.html" title="Django 6.0.7 release notes">previous</a>
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="6.0.5.html" title="Django 6.0.5 release notes">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="releases-6.0.6">
+            
+  <section id="s-django-6-0-6-release-notes">
+<span id="django-6-0-6-release-notes"></span><h1>Django 6.0.6 release notes<a class="headerlink" href="#django-6-0-6-release-notes" title="Link to this heading">¶</a></h1>
+<p><em>June 3, 2026</em></p>
+<p>Django 6.0.6 fixes five security issues with severity “low” and one bug in
+6.0.5. Also, the latest string translations from Transifex are incorporated.</p>
+<section id="s-cve-2026-6873-signed-cookie-salt-namespace-collision">
+<span id="cve-2026-6873-signed-cookie-salt-namespace-collision"></span><h2>CVE-2026-6873: Signed cookie salt namespace collision<a class="headerlink" href="#cve-2026-6873-signed-cookie-salt-namespace-collision" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../ref/request-response.html#django.http.HttpRequest.get_signed_cookie" title="django.http.HttpRequest.get_signed_cookie"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_signed_cookie()</span></code></a> derived the signing salt by
+concatenating the cookie name (<code class="docutils literal notranslate"><span class="pre">key</span></code>) and <code class="docutils literal notranslate"><span class="pre">salt</span></code> arguments. When distinct
+name and salt pairs produced the same concatenation, cookies could be accepted
+in a context different from the one where they were signed.</p>
+<p>Cookies are now signed with an unambiguous salt derivation. For backwards
+compatibility, cookies signed by older Django versions are accepted until
+Django 2028. Projects affected by the above ambiguity should set
+<a class="reference internal" href="../ref/settings.html#std-setting-SIGNED_COOKIE_LEGACY_SALT_FALLBACK"><code class="xref std std-setting docutils literal notranslate"><span class="pre">SIGNED_COOKIE_LEGACY_SALT_FALLBACK</span></code></a> to <code class="docutils literal notranslate"><span class="pre">False</span></code> to reject older
+cookies immediately.</p>
+<p>This issue has severity “low” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security policy</span></a>.</p>
+</section>
+<section id="s-cve-2026-7666-potential-unencrypted-email-transmission-via-starttls-in-the-smtp-backend">
+<span id="cve-2026-7666-potential-unencrypted-email-transmission-via-starttls-in-the-smtp-backend"></span><h2>CVE-2026-7666: Potential unencrypted email transmission via <code class="docutils literal notranslate"><span class="pre">STARTTLS</span></code> in the SMTP backend<a class="headerlink" href="#cve-2026-7666-potential-unencrypted-email-transmission-via-starttls-in-the-smtp-backend" title="Link to this heading">¶</a></h2>
+<p>When using <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_USE_TLS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_USE_TLS</span></code></a>, a failed <code class="docutils literal notranslate"><span class="pre">STARTTLS</span></code> handshake could
+leave a partially-initialized connection that would subsequently be reused for
+sending email without encryption. This can occur with <code class="docutils literal notranslate"><span class="pre">fail_silently=True</span></code>,
+as used by <a class="reference internal" href="../topics/email.html#django.core.mail.send_mail" title="django.core.mail.send_mail"><code class="xref py py-func docutils literal notranslate"><span class="pre">send_mail()</span></code></a> and
+<a class="reference internal" href="../ref/middleware.html#django.middleware.common.BrokenLinkEmailsMiddleware" title="django.middleware.common.BrokenLinkEmailsMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">BrokenLinkEmailsMiddleware</span></code></a>, among others.
+Connections configured with <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_USE_SSL"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_USE_SSL</span></code></a> are not affected.</p>
+<p>This issue has severity “low” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security policy</span></a>.</p>
+</section>
+<section id="s-cve-2026-8404-potential-exposure-of-private-data-via-case-sensitive-cache-control-directives">
+<span id="cve-2026-8404-potential-exposure-of-private-data-via-case-sensitive-cache-control-directives"></span><h2>CVE-2026-8404: Potential exposure of private data via case-sensitive <code class="docutils literal notranslate"><span class="pre">Cache-Control</span></code> directives<a class="headerlink" href="#cve-2026-8404-potential-exposure-of-private-data-via-case-sensitive-cache-control-directives" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../ref/middleware.html#django.middleware.cache.UpdateCacheMiddleware" title="django.middleware.cache.UpdateCacheMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">UpdateCacheMiddleware</span></code></a> and
+<a class="reference internal" href="../topics/cache.html#django.views.decorators.cache.cache_page" title="django.views.decorators.cache.cache_page"><code class="xref py py-func docutils literal notranslate"><span class="pre">cache_page()</span></code></a> incorrectly cached responses
+marked with private <code class="docutils literal notranslate"><span class="pre">Cache-Control</span></code> directives when using mixed or uppercase
+values (e.g. <code class="docutils literal notranslate"><span class="pre">Private</span></code>).</p>
+<p>The <a class="reference internal" href="../topics/http/decorators.html#django.views.decorators.cache.cache_control" title="django.views.decorators.cache.cache_control"><code class="xref py py-func docutils literal notranslate"><span class="pre">cache_control()</span></code></a> decorator and
+<a class="reference internal" href="../ref/utils.html#django.utils.cache.patch_cache_control" title="django.utils.cache.patch_cache_control"><code class="xref py py-func docutils literal notranslate"><span class="pre">patch_cache_control()</span></code></a> function were not affected,
+since they normalize directives to lowercase. This issue only affects responses
+where <code class="docutils literal notranslate"><span class="pre">Cache-Control</span></code> is set manually.</p>
+<p>This issue has severity “low” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security policy</span></a>.</p>
+</section>
+<section id="s-cve-2026-35193-potential-exposure-of-private-data-via-missing-vary-authorization">
+<span id="cve-2026-35193-potential-exposure-of-private-data-via-missing-vary-authorization"></span><h2>CVE-2026-35193: Potential exposure of private data via missing <code class="docutils literal notranslate"><span class="pre">Vary:</span> <span class="pre">Authorization</span></code><a class="headerlink" href="#cve-2026-35193-potential-exposure-of-private-data-via-missing-vary-authorization" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../ref/middleware.html#django.middleware.cache.UpdateCacheMiddleware" title="django.middleware.cache.UpdateCacheMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">UpdateCacheMiddleware</span></code></a> and
+<a class="reference internal" href="../topics/cache.html#django.views.decorators.cache.cache_page" title="django.views.decorators.cache.cache_page"><code class="xref py py-func docutils literal notranslate"><span class="pre">cache_page()</span></code></a> decorator allowed responses
+to requests bearing an <code class="docutils literal notranslate"><span class="pre">Authorization</span></code> header (and without <code class="docutils literal notranslate"><span class="pre">Cache-Control:</span>
+<span class="pre">public</span></code>) to be cached. To conform with the existing mechanism for constructing
+cache keys, responses to these requests will now <a class="reference internal" href="../topics/cache.html#using-vary-headers"><span class="std std-ref">vary on</span></a> <code class="docutils literal notranslate"><span class="pre">Authorization</span></code>.</p>
+<p>This issue has severity “low” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security policy</span></a>.</p>
+</section>
+<section id="s-cve-2026-48587-potential-exposure-of-private-data-via-whitespace-padding-in-vary-header">
+<span id="cve-2026-48587-potential-exposure-of-private-data-via-whitespace-padding-in-vary-header"></span><h2>CVE-2026-48587: Potential exposure of private data via whitespace padding in <code class="docutils literal notranslate"><span class="pre">Vary</span></code> header<a class="headerlink" href="#cve-2026-48587-potential-exposure-of-private-data-via-whitespace-padding-in-vary-header" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../ref/middleware.html#django.middleware.cache.UpdateCacheMiddleware" title="django.middleware.cache.UpdateCacheMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">UpdateCacheMiddleware</span></code></a> incorrectly cached
+responses whose <code class="docutils literal notranslate"><span class="pre">Vary</span></code> header values contained leading or trailing
+whitespace. Because <code class="docutils literal notranslate"><span class="pre">has_vary_header()</span></code> failed to strip that, a <code class="docutils literal notranslate"><span class="pre">Vary:</span> <span class="pre">*</span></code>
+header value with surrounding whitespace was not recognized as containing the
+wildcard, causing it to be stored and potentially served from the cache when it
+should not have been.</p>
+<p>This issue has severity “low” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security policy</span></a>.</p>
+</section>
+<section id="s-bugfixes">
+<span id="bugfixes"></span><h2>Bugfixes<a class="headerlink" href="#bugfixes" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Fixed a bug in Django 6.0 where an alert message on an admin changelist with
+<code class="docutils literal notranslate"><span class="pre">ModelAdmin.list_editable</span></code> referred to the “Run” button by its previous
+name (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/37094">#37094</a>).</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Django 6.0.6 release notes</a><ul>
+<li><a class="reference internal" href="#cve-2026-6873-signed-cookie-salt-namespace-collision">CVE-2026-6873: Signed cookie salt namespace collision</a></li>
+<li><a class="reference internal" href="#cve-2026-7666-potential-unencrypted-email-transmission-via-starttls-in-the-smtp-backend">CVE-2026-7666: Potential unencrypted email transmission via <code class="docutils literal notranslate"><span class="pre">STARTTLS</span></code> in the SMTP backend</a></li>
+<li><a class="reference internal" href="#cve-2026-8404-potential-exposure-of-private-data-via-case-sensitive-cache-control-directives">CVE-2026-8404: Potential exposure of private data via case-sensitive <code class="docutils literal notranslate"><span class="pre">Cache-Control</span></code> directives</a></li>
+<li><a class="reference internal" href="#cve-2026-35193-potential-exposure-of-private-data-via-missing-vary-authorization">CVE-2026-35193: Potential exposure of private data via missing <code class="docutils literal notranslate"><span class="pre">Vary:</span> <span class="pre">Authorization</span></code></a></li>
+<li><a class="reference internal" href="#cve-2026-48587-potential-exposure-of-private-data-via-whitespace-padding-in-vary-header">CVE-2026-48587: Potential exposure of private data via whitespace padding in <code class="docutils literal notranslate"><span class="pre">Vary</span></code> header</a></li>
+<li><a class="reference internal" href="#bugfixes">Bugfixes</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="6.0.7.html"
+                          title="previous chapter">Django 6.0.7 release notes</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="6.0.5.html"
+                          title="next chapter">Django 6.0.5 release notes</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/releases/6.0.6.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="6.0.7.html" title="Django 6.0.7 release notes">previous</a>
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="6.0.5.html" title="Django 6.0.5 release notes">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

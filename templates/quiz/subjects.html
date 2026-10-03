@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Subjects</h3>
+<form method="post" class="d-flex gap-2 mb-3">{% csrf_token %}
+ {{ form.name }}
+ <button class="btn btn-primary">Add</button>
+</form>
+{% for e in form.name.errors %}<div class="text-danger">{{ e }}</div>{% endfor %}
+<table class="table">
+ {% for s in subjects %}
+ <tr>
+ <td>{{ s.name }}</td>
+ <td>{{ s.questions.count }} questions</td>
+ <td>
+ <form method="post" action="{% url 'subject_delete' s.pk %}"
+ onsubmit="return confirm('Remove subject and its questions?')">
+ {% csrf_token %}<button class="btn btn-sm btn-danger">Remove</button>
+ </form>
+ </td>
+ </tr>
+ {% endfor %}
+</table>
+{% endblock %}

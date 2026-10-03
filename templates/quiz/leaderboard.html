@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Leaderboard</h3>
+<table class="table">
+ <tr><th>#</th><th>Student</th><th>Quizzes</th><th>Correct / Asked</th></tr>
+ {% for r in rows %}
+ <tr><td>{{ forloop.counter }}</td><td>{{ r.user__username }}</td>
+ <td>{{ r.attempts }}</td><td>{{ r.right }} / {{ r.asked }}</td></tr>
+ {% endfor %}
+</table>
+{% endblock %}

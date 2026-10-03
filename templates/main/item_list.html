@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+  <form class="d-flex gap-2" method="get">
+    <input class="form-control" name="q" value="{{ q }}" placeholder="Search...">
+    <button class="btn btn-secondary">Search</button>
+  </form>
+  <a class="btn btn-primary" href="{% url 'item_create' %}">+ Add</a>
+</div>
+<table class="table table-striped">
+  <tr><th>Title</th><th>Status</th><th>Created</th><th></th></tr>
+  {% for i in page %}
+  <tr>
+    <td>{{ i.title }}</td>
+    <td>{{ i.get_status_display }}</td>
+    <td>{{ i.created_at|date:"d M Y" }}</td>
+    <td>
+      <a class="btn btn-sm btn-warning" href="{% url 'item_update' i.pk %}">Edit</a>
+      <a class="btn btn-sm btn-danger" href="{% url 'item_delete' i.pk %}">Delete</a>
+    </td>
+  </tr>
+  {% empty %}<tr><td colspan="4">Nothing here yet</td></tr>
+  {% endfor %}
+</table>
+{% if page.has_previous %}<a href="?page={{ page.previous_page_number }}&q={{ q }}">Prev</a>{% endif %}
+Page {{ page.number }} of {{ page.paginator.num_pages }}
+{% if page.has_next %}<a href="?page={{ page.next_page_number }}&q={{ q }}">Next</a>{% endif %}
+{% endblock %}

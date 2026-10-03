@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Composite primary keys &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../_static/default.css?v=bf4d74af" />
+    <script src="../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Cryptographic signing" href="signing.html" />
+    <link rel="prev" title="Conditional View Processing" href="conditional-view-processing.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Module index" href="../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="conditional-view-processing.html" title="Conditional View Processing">previous</a>
+     |
+    <a href="index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="signing.html" title="Cryptographic signing">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="topics-composite-primary-key">
+            
+  <section id="s-composite-primary-keys">
+<span id="composite-primary-keys"></span><h1>Composite primary keys<a class="headerlink" href="#composite-primary-keys" title="Link to this heading">¶</a></h1>
+<p>In Django, each model has a primary key. By default, this primary key consists
+of a single field.</p>
+<p>In most cases, a single primary key should suffice. In database design,
+however, defining a primary key consisting of multiple fields is sometimes
+necessary.</p>
+<p>To use a composite primary key, when defining a model set the <code class="docutils literal notranslate"><span class="pre">pk</span></code> attribute
+to be a <a class="reference internal" href="../ref/models/fields.html#django.db.models.CompositePrimaryKey" title="django.db.models.CompositePrimaryKey"><code class="xref py py-class docutils literal notranslate"><span class="pre">CompositePrimaryKey</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Product</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Order</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">reference</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderLineItem</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">pk</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CompositePrimaryKey</span><span class="p">(</span><span class="s2">&quot;product_id&quot;</span><span class="p">,</span> <span class="s2">&quot;order_id&quot;</span><span class="p">)</span>
+    <span class="n">product</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Product</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Order</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">quantity</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This will instruct Django to create a composite primary key
+(<code class="docutils literal notranslate"><span class="pre">PRIMARY</span> <span class="pre">KEY</span> <span class="pre">(product_id,</span> <span class="pre">order_id)</span></code>) when creating the table.</p>
+<p>A composite primary key is represented by a <code class="docutils literal notranslate"><span class="pre">tuple</span></code>:</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">product</span> <span class="o">=</span> <span class="n">Product</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;apple&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">order</span> <span class="o">=</span> <span class="n">Order</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">reference</span><span class="o">=</span><span class="s2">&quot;A755H&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">item</span> <span class="o">=</span> <span class="n">OrderLineItem</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">product</span><span class="o">=</span><span class="n">product</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">quantity</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">item</span><span class="o">.</span><span class="n">pk</span>
+<span class="go">(1, &quot;A755H&quot;)</span>
+</pre></div>
+</div>
+<p>You can assign a <code class="docutils literal notranslate"><span class="pre">tuple</span></code> to the <a class="reference internal" href="../ref/models/instances.html#django.db.models.Model.pk" title="django.db.models.Model.pk"><code class="xref py py-attr docutils literal notranslate"><span class="pre">pk</span></code></a> attribute.
+This sets the associated field values:</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">item</span> <span class="o">=</span> <span class="n">OrderLineItem</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;B142C&quot;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">item</span><span class="o">.</span><span class="n">pk</span>
+<span class="go">(2, &quot;B142C&quot;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">item</span><span class="o">.</span><span class="n">product_id</span>
+<span class="go">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">item</span><span class="o">.</span><span class="n">order_id</span>
+<span class="go">&quot;B142C&quot;</span>
+</pre></div>
+</div>
+<p>A composite primary key can also be filtered by a <code class="docutils literal notranslate"><span class="pre">tuple</span></code>:</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">OrderLineItem</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;A755H&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+<span class="go">1</span>
+</pre></div>
+</div>
+<p>We’re still working on composite primary key support for
+<a class="reference internal" href="#cpk-and-relations"><span class="std std-ref">relational fields</span></a>, including
+<a class="reference internal" href="../ref/contrib/contenttypes.html#django.contrib.contenttypes.fields.GenericForeignKey" title="django.contrib.contenttypes.fields.GenericForeignKey"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericForeignKey</span></code></a> fields, and the Django admin. Models with composite
+primary keys cannot be registered in the Django admin at this time. You can
+expect to see this in future releases.</p>
+<section id="s-migrating-to-a-composite-primary-key">
+<span id="migrating-to-a-composite-primary-key"></span><h2>Migrating to a composite primary key<a class="headerlink" href="#migrating-to-a-composite-primary-key" title="Link to this heading">¶</a></h2>
+<p>Django doesn’t support migrating to, or from, a composite primary key after the
+table is created. It also doesn’t support adding or removing fields from the
+composite primary key.</p>
+<p>If you would like to migrate an existing table from a single primary key to a
+composite primary key, follow your database backend’s instructions to do so.</p>
+<p>Once the composite primary key is in place, add the <code class="docutils literal notranslate"><span class="pre">CompositePrimaryKey</span></code>
+field to your model. This allows Django to recognize and handle the composite
+primary key appropriately.</p>
+<p>While migration operations (e.g. <code class="docutils literal notranslate"><span class="pre">AddField</span></code>, <code class="docutils literal notranslate"><span class="pre">AlterField</span></code>) on primary key
+fields are not supported, <code class="docutils literal notranslate"><span class="pre">makemigrations</span></code> will still detect changes.</p>
+<p>In order to avoid errors, it’s recommended to apply such migrations with
+<code class="docutils literal notranslate"><span class="pre">--fake</span></code>.</p>
+<p>Alternatively, <a class="reference internal" href="../ref/migration-operations.html#django.db.migrations.operations.SeparateDatabaseAndState" title="django.db.migrations.operations.SeparateDatabaseAndState"><code class="xref py py-class docutils literal notranslate"><span class="pre">SeparateDatabaseAndState</span></code></a> may be used to execute the
+backend-specific migrations and Django-generated migrations in a single
+operation.</p>
+</section>
+<section id="s-composite-primary-keys-and-relations">
+<span id="s-cpk-and-relations"></span><span id="composite-primary-keys-and-relations"></span><span id="cpk-and-relations"></span><h2>Composite primary keys and relations<a class="headerlink" href="#composite-primary-keys-and-relations" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../ref/models/fields.html#relationship-fields"><span class="std std-ref">Relationship fields</span></a>, including
+<a class="reference internal" href="../ref/contrib/contenttypes.html#generic-relations"><span class="std std-ref">generic relations</span></a> do not support composite primary
+keys.</p>
+<p>For example, given the <code class="docutils literal notranslate"><span class="pre">OrderLineItem</span></code> model, the following is not
+supported:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Foo</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">item</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">OrderLineItem</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Because <code class="docutils literal notranslate"><span class="pre">ForeignKey</span></code> currently cannot reference models with composite primary
+keys.</p>
+<p>To work around this limitation, <code class="docutils literal notranslate"><span class="pre">ForeignObject</span></code> can be used as an
+alternative:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Foo</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">item_order_id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+    <span class="n">item_product_id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
+    <span class="n">item</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignObject</span><span class="p">(</span>
+        <span class="n">OrderLineItem</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">from_fields</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;item_order_id&quot;</span><span class="p">,</span> <span class="s2">&quot;item_product_id&quot;</span><span class="p">),</span>
+        <span class="n">to_fields</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;order_id&quot;</span><span class="p">,</span> <span class="s2">&quot;product_id&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">ForeignObject</span></code> is much like <code class="docutils literal notranslate"><span class="pre">ForeignKey</span></code>, except that it doesn’t create
+any columns (e.g. <code class="docutils literal notranslate"><span class="pre">item_id</span></code>), foreign key constraints or indexes in the
+database, and the <code class="docutils literal notranslate"><span class="pre">on_delete</span></code> argument is ignored.</p>
+</section>
+<section id="s-composite-primary-keys-and-database-functions">
+<span id="s-cpk-and-database-functions"></span><span id="composite-primary-keys-and-database-functions"></span><span id="cpk-and-database-functions"></span><h2>Composite primary keys and database functions<a class="headerlink" href="#composite-primary-keys-and-database-functions" title="Link to this heading">¶</a></h2>
+<p>Many database functions only accept a single expression.</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">MAX</span><span class="p">(</span><span class="ss">&quot;order_id&quot;</span><span class="p">)</span><span class="w">  </span><span class="c1">-- OK</span>
+<span class="k">MAX</span><span class="p">(</span><span class="ss">&quot;product_id&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">&quot;order_id&quot;</span><span class="p">)</span><span class="w">  </span><span class="c1">-- ERROR</span>
+</pre></div>
+</div>
+<p>In these cases, providing a composite primary key reference raises a
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>, since it is composed of multiple column expressions. An
+exception is made for <code class="docutils literal notranslate"><span class="pre">Count</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Max</span><span class="p">(</span><span class="s2">&quot;order_id&quot;</span><span class="p">)</span>  <span class="c1"># OK</span>
+<span class="n">Max</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">)</span>  <span class="c1"># ValueError</span>
+<span class="n">Count</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">)</span>  <span class="c1"># OK</span>
+</pre></div>
+</div>
+</section>
+<section id="s-composite-primary-keys-in-forms">
+<span id="composite-primary-keys-in-forms"></span><h2>Composite primary keys in forms<a class="headerlink" href="#composite-primary-keys-in-forms" title="Link to this heading">¶</a></h2>
+<p>As a composite primary key is a virtual field, a field which doesn’t represent
+a single database column, this field is excluded from ModelForms.</p>
+<p>For example, take the following form:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">OrderLineItemForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">ModelForm</span><span class="p">):</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">OrderLineItem</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="s2">&quot;__all__&quot;</span>
+</pre></div>
+</div>
+<p>This form does not have a form field <code class="docutils literal notranslate"><span class="pre">pk</span></code> for the composite primary key:</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">OrderLineItemForm</span><span class="p">()</span>
+<span class="go">&lt;OrderLineItemForm bound=False, valid=Unknown, fields=(product;order;quantity)&gt;</span>
+</pre></div>
+</div>
+<p>Setting the primary composite field <code class="docutils literal notranslate"><span class="pre">pk</span></code> as a form field raises an unknown
+field <a class="reference internal" href="../ref/exceptions.html#django.core.exceptions.FieldError" title="django.core.exceptions.FieldError"><code class="xref py py-exc docutils literal notranslate"><span class="pre">FieldError</span></code></a>.</p>
+<div class="admonition-primary-key-fields-are-read-only admonition">
+<p class="admonition-title">Primary key fields are read only</p>
+<p>If you change the value of a primary key on an existing object and then
+save it, a new object will be created alongside the old one (see
+<a class="reference internal" href="../ref/models/fields.html#django.db.models.Field.primary_key" title="django.db.models.Field.primary_key"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Field.primary_key</span></code></a>).</p>
+<p>This is also true of composite primary keys. Hence, you may want to set
+<a class="reference internal" href="../ref/models/fields.html#django.db.models.Field.editable" title="django.db.models.Field.editable"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Field.editable</span></code></a> to <code class="docutils literal notranslate"><span class="pre">False</span></code> on all primary key fields to exclude
+them from ModelForms.</p>
+</div>
+</section>
+<section id="s-composite-primary-keys-in-model-validation">
+<span id="composite-primary-keys-in-model-validation"></span><h2>Composite primary keys in model validation<a class="headerlink" href="#composite-primary-keys-in-model-validation" title="Link to this heading">¶</a></h2>
+<p>Since <code class="docutils literal notranslate"><span class="pre">pk</span></code> is only a virtual field, including <code class="docutils literal notranslate"><span class="pre">pk</span></code> as a field name in the
+<code class="docutils literal notranslate"><span class="pre">exclude</span></code> argument of <a class="reference internal" href="../ref/models/instances.html#django.db.models.Model.clean_fields" title="django.db.models.Model.clean_fields"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Model.clean_fields()</span></code></a> has no effect. To exclude
+the composite primary key fields from
+<a class="reference internal" href="../ref/models/instances.html#validating-objects"><span class="std std-ref">model validation</span></a>, specify each field individually.
+<a class="reference internal" href="../ref/models/instances.html#django.db.models.Model.validate_unique" title="django.db.models.Model.validate_unique"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Model.validate_unique()</span></code></a> can still be called with <code class="docutils literal notranslate"><span class="pre">exclude={&quot;pk&quot;}</span></code> to
+skip uniqueness checks.</p>
+</section>
+<section id="s-building-composite-primary-key-ready-applications">
+<span id="building-composite-primary-key-ready-applications"></span><h2>Building composite primary key ready applications<a class="headerlink" href="#building-composite-primary-key-ready-applications" title="Link to this heading">¶</a></h2>
+<p>Prior to the introduction of composite primary keys, the single field composing
+the primary key of a model could be retrieved by introspecting the
+<a class="reference internal" href="../ref/models/fields.html#django.db.models.Field.primary_key" title="django.db.models.Field.primary_key"><code class="xref py py-attr docutils literal notranslate"><span class="pre">primary_key</span></code></a> attribute of its fields:</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pk_field</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">Product</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_fields</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">primary_key</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">pk_field</span> <span class="o">=</span> <span class="n">field</span>
+<span class="gp">... </span>        <span class="k">break</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pk_field</span>
+<span class="go">&lt;django.db.models.fields.AutoField: id&gt;</span>
+</pre></div>
+</div>
+<p>Now that a primary key can be composed of multiple fields the
+<a class="reference internal" href="../ref/models/fields.html#django.db.models.Field.primary_key" title="django.db.models.Field.primary_key"><code class="xref py py-attr docutils literal notranslate"><span class="pre">primary_key</span></code></a> attribute can no longer be relied
+upon to identify members of the primary key as it will be set to <code class="docutils literal notranslate"><span class="pre">False</span></code> to
+maintain the invariant that at most one field per model will have this
+attribute set to <code class="docutils literal notranslate"><span class="pre">True</span></code>:</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pk_fields</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">OrderLineItem</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_fields</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">primary_key</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">pk_fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pk_fields</span>
+<span class="go">[]</span>
+</pre></div>
+</div>
+<p>In order to build application code that properly handles composite primary
+keys the <a class="reference internal" href="../ref/models/meta.html#django.db.models.options.Options.pk_fields" title="django.db.models.options.Options.pk_fields"><code class="xref py py-attr docutils literal notranslate"><span class="pre">_meta.pk_fields</span></code></a>
+attribute should be used instead:</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Product</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">pk_fields</span>
+<span class="go">[&lt;django.db.models.fields.AutoField: id&gt;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">OrderLineItem</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">pk_fields</span>
+<span class="go">[</span>
+<span class="go">    &lt;django.db.models.fields.ForeignKey: product&gt;,</span>
+<span class="go">    &lt;django.db.models.fields.ForeignKey: order&gt;</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Composite primary keys</a><ul>
+<li><a class="reference internal" href="#migrating-to-a-composite-primary-key">Migrating to a composite primary key</a></li>
+<li><a class="reference internal" href="#composite-primary-keys-and-relations">Composite primary keys and relations</a></li>
+<li><a class="reference internal" href="#composite-primary-keys-and-database-functions">Composite primary keys and database functions</a></li>
+<li><a class="reference internal" href="#composite-primary-keys-in-forms">Composite primary keys in forms</a></li>
+<li><a class="reference internal" href="#composite-primary-keys-in-model-validation">Composite primary keys in model validation</a></li>
+<li><a class="reference internal" href="#building-composite-primary-key-ready-applications">Building composite primary key ready applications</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="conditional-view-processing.html"
+                          title="previous chapter">Conditional View Processing</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="signing.html"
+                          title="next chapter">Cryptographic signing</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/topics/composite-primary-key.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="conditional-view-processing.html" title="Conditional View Processing">previous</a>
+     |
+    <a href="index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="signing.html" title="Cryptographic signing">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

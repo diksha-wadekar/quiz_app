@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<form method="post" id="quizform">{% csrf_token %}
+ {% for q in questions %}
+ <div class="card mb-3"><div class="card-body">
+ <p><b>Q{{ forloop.counter }}. {{ q.text }}</b></p>
+ <div><label><input type="radio" name="q{{ q.id }}" value="A"> {{ q.option_a }}</label></div>
+ <div><label><input type="radio" name="q{{ q.id }}" value="B"> {{ q.option_b }}</label></div>
+ <div><label><input type="radio" name="q{{ q.id }}" value="C"> {{ q.option_c }}</label></div>
+ <div><label><input type="radio" name="q{{ q.id }}" value="D"> {{ q.option_d }}</label></div>
+ </div></div>
+ {% endfor %}
+ <button class="btn btn-success">Submit</button>
+</form>
+{% endblock %}
+
+<p>Time left: <b id="t">300</b> s</p>
+<script>
+let s = 300;
+const el = document.getElementById('t');
+setInterval(function () {
+ s--; el.textContent = s;
+ if (s <= 0) document.getElementById('quizform').submit();
+}, 1000);
+</script>

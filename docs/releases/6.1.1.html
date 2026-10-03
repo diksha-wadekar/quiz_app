@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Django 6.1.1 release notes &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../_static/default.css?v=bf4d74af" />
+    <script src="../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Django 6.1 release notes" href="6.1.html" />
+    <link rel="prev" title="Django 6.1.2 release notes" href="6.1.2.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Module index" href="../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="6.1.2.html" title="Django 6.1.2 release notes">previous</a>
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="6.1.html" title="Django 6.1 release notes">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="releases-6.1.1">
+            
+  <section id="s-django-6-1-1-release-notes">
+<span id="django-6-1-1-release-notes"></span><h1>Django 6.1.1 release notes<a class="headerlink" href="#django-6-1-1-release-notes" title="Link to this heading">¶</a></h1>
+<p><em>September 2, 2026</em></p>
+<p>Django 6.1.1 fixes one crash in Django 5.2 and several bugs in 6.1.</p>
+<section id="s-bugfixes">
+<span id="bugfixes"></span><h2>Bugfixes<a class="headerlink" href="#bugfixes" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Fixed a crash in Django 5.2 when combining <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.distinct" title="django.db.models.query.QuerySet.distinct"><code class="xref py py-meth docutils literal notranslate"><span class="pre">distinct(*fields)</span></code></a> with <code class="docutils literal notranslate"><span class="pre">order_by()</span></code> and <code class="docutils literal notranslate"><span class="pre">values()</span></code> and using two
+lookup paths resolving to the same column (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/37222">#37222</a>).</p></li>
+<li><p>Fixed a regression in Django 6.1 where the deprecation of double-dot variable
+lookups incorrectly applied to string and translated template literals
+containing two consecutive dots, such as <code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">&quot;a..b&quot;</span> <span class="pre">}}</span></code> (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/37257">#37257</a>).</p></li>
+<li><p>Fixed a regression in Django 6.1 where <a class="reference internal" href="../ref/contrib/admin/index.html#django.contrib.admin.ModelAdmin.list_display" title="django.contrib.admin.ModelAdmin.list_display"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ModelAdmin.list_display</span></code></a>
+entries that traverse multiple relations using <code class="docutils literal notranslate"><span class="pre">__</span></code> could crash or display
+incorrect values (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/37270">#37270</a>).</p></li>
+<li><p>Fixed a bug in Django 6.1 where the <code class="docutils literal notranslate"><span class="pre">fields.E323</span></code> system check did not
+detect mixed <code class="docutils literal notranslate"><span class="pre">on_delete</span></code> variants for auto-created intermediate models for
+<code class="docutils literal notranslate"><span class="pre">ManyToManyField</span></code>s (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/37254">#37254</a>).</p></li>
+<li><p>Fixed a regression in Django 6.1 where custom querysets used with
+<a class="reference internal" href="../ref/models/querysets.html#django.db.models.Prefetch" title="django.db.models.Prefetch"><code class="xref py py-class docutils literal notranslate"><span class="pre">Prefetch</span></code></a> for forward foreign key or reverse
+one-to-one relationships were not routed using the parent queryset’s
+database (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/37300">#37300</a>).</p></li>
+<li><p>Fixed a regression in Django 6.1 where HTML-safe strings, such as those
+created with <a class="reference internal" href="../ref/utils.html#django.utils.safestring.mark_safe" title="django.utils.safestring.mark_safe"><code class="xref py py-func docutils literal notranslate"><span class="pre">mark_safe()</span></code></a>, used as form media
+assets were treated as asset paths rather than being rendered verbatim
+(<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/37262">#37262</a>).</p></li>
+<li><p>Fixed a regression in Django 6.1 that caused <code class="docutils literal notranslate"><span class="pre">AlterField</span></code> operations that
+changed only the Python-level <code class="docutils literal notranslate"><span class="pre">on_delete</span></code> option of <code class="docutils literal notranslate"><span class="pre">ForeignKey</span></code> or
+<code class="docutils literal notranslate"><span class="pre">OneToOneField</span></code> fields to perform unnecessary schema changes
+(<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/37260">#37260</a>).</p></li>
+<li><p>Fixed a bug in Django 6.1 where <a class="reference internal" href="../ref/models/fields.html#django.db.models.DecimalField" title="django.db.models.DecimalField"><code class="xref py py-class docutils literal notranslate"><span class="pre">DecimalField</span></code></a>
+without <code class="docutils literal notranslate"><span class="pre">max_digits</span></code> and <code class="docutils literal notranslate"><span class="pre">decimal_places</span></code> caused a crash when retrieving
+values on SQLite (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/37275">#37275</a>).</p></li>
+<li><p>Fixed a regression in Django 6.1 that caused a crash when iterating a
+<code class="docutils literal notranslate"><span class="pre">QuerySet</span></code> of a model overriding <code class="docutils literal notranslate"><span class="pre">Model.from_db()</span></code> without the new
+<code class="docutils literal notranslate"><span class="pre">fetch_mode</span></code> keyword argument. Such overrides now work again, but are
+deprecated and should be updated to accept <code class="docutils literal notranslate"><span class="pre">fetch_mode</span></code> (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/37259">#37259</a>).</p></li>
+<li><p>Fixed a regression in Django 6.1 where an admin changelist search crashed
+when a <code class="docutils literal notranslate"><span class="pre">search_fields</span></code> entry used an <code class="docutils literal notranslate"><span class="pre">__exact</span></code> lookup on a field with
+<code class="docutils literal notranslate"><span class="pre">choices</span></code>, and where any search term matched all rows with a <code class="docutils literal notranslate"><span class="pre">True</span></code>
+value when an <code class="docutils literal notranslate"><span class="pre">__exact</span></code> lookup was used on a <code class="docutils literal notranslate"><span class="pre">BooleanField</span></code>
+(<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/37263">#37263</a>).</p></li>
+<li><p>Fixed a regression in Django 6.1 that caused <code class="docutils literal notranslate"><span class="pre">__in</span></code> lookups on annotations
+to erroneously return empty querysets and <code class="docutils literal notranslate"><span class="pre">__range</span></code> lookups to crash when
+passed an iterator (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/37311">#37311</a>).</p></li>
+<li><p>Fixed a bug in Django 6.1 where <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.in_bulk" title="django.db.models.query.QuerySet.in_bulk"><code class="xref py py-meth docutils literal notranslate"><span class="pre">QuerySet.in_bulk()</span></code></a> chained after
+<a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.values" title="django.db.models.query.QuerySet.values"><code class="xref py py-meth docutils literal notranslate"><span class="pre">QuerySet.values()</span></code></a> or <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.values_list" title="django.db.models.query.QuerySet.values_list"><code class="xref py py-meth docutils literal notranslate"><span class="pre">QuerySet.values_list()</span></code></a> could drop selected
+annotations or produce incorrect mapping keys (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/37312">#37312</a>).</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Django 6.1.1 release notes</a><ul>
+<li><a class="reference internal" href="#bugfixes">Bugfixes</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="6.1.2.html"
+                          title="previous chapter">Django 6.1.2 release notes</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="6.1.html"
+                          title="next chapter">Django 6.1 release notes</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/releases/6.1.1.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="6.1.2.html" title="Django 6.1.2 release notes">previous</a>
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="6.1.html" title="Django 6.1 release notes">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

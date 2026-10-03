@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Django 6.0.7 release notes &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../_static/default.css?v=bf4d74af" />
+    <script src="../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Django 6.0.6 release notes" href="6.0.6.html" />
+    <link rel="prev" title="Django 6.0.8 release notes" href="6.0.8.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Module index" href="../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="6.0.8.html" title="Django 6.0.8 release notes">previous</a>
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="6.0.6.html" title="Django 6.0.6 release notes">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="releases-6.0.7">
+            
+  <section id="s-django-6-0-7-release-notes">
+<span id="django-6-0-7-release-notes"></span><h1>Django 6.0.7 release notes<a class="headerlink" href="#django-6-0-7-release-notes" title="Link to this heading">¶</a></h1>
+<p><em>July 7, 2026</em></p>
+<p>Django 6.0.7 fixes three security issues with severity “low” and one bug in
+6.0.6.</p>
+<section id="s-cve-2026-48588-potential-exposure-of-private-data-via-cached-set-cookie-response">
+<span id="cve-2026-48588-potential-exposure-of-private-data-via-cached-set-cookie-response"></span><h2>CVE-2026-48588: Potential exposure of private data via cached <code class="docutils literal notranslate"><span class="pre">Set-Cookie</span></code> response<a class="headerlink" href="#cve-2026-48588-potential-exposure-of-private-data-via-cached-set-cookie-response" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../ref/middleware.html#django.middleware.cache.UpdateCacheMiddleware" title="django.middleware.cache.UpdateCacheMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">UpdateCacheMiddleware</span></code></a> and
+<a class="reference internal" href="../topics/cache.html#django.views.decorators.cache.cache_page" title="django.views.decorators.cache.cache_page"><code class="xref py py-func docutils literal notranslate"><span class="pre">cache_page()</span></code></a> avoided caching responses
+that set a cookie while varying on <code class="docutils literal notranslate"><span class="pre">Cookie</span></code> only when the incoming request
+contained no cookies at all. When the request already carried an unrelated
+cookie (such as a language or theme preference cookie), the protection did not
+apply, allowing a response that sets a session or other sensitive cookie to be
+stored in Django’s shared cache.</p>
+<p>This issue has severity “low” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security policy</span></a>.</p>
+</section>
+<section id="s-cve-2026-53877-heap-buffer-over-read-in-gdalraster">
+<span id="cve-2026-53877-heap-buffer-over-read-in-gdalraster"></span><h2>CVE-2026-53877: Heap buffer over-read in <code class="docutils literal notranslate"><span class="pre">GDALRaster</span></code><a class="headerlink" href="#cve-2026-53877-heap-buffer-over-read-in-gdalraster" title="Link to this heading">¶</a></h2>
+<p>When <a class="reference internal" href="../ref/contrib/gis/gdal.html#django.contrib.gis.gdal.GDALRaster" title="django.contrib.gis.gdal.GDALRaster"><code class="xref py py-class docutils literal notranslate"><span class="pre">GDALRaster</span></code></a> was instantiated with a bytes
+object representing a raster file, the
+<a class="reference internal" href="../ref/contrib/gis/gdal.html#django.contrib.gis.gdal.GDALRaster.vsi_buffer" title="django.contrib.gis.gdal.GDALRaster.vsi_buffer"><code class="xref py py-attr docutils literal notranslate"><span class="pre">vsi_buffer</span></code></a> property could over-read
+the allocated buffer by approximately 32 bytes. This could result in
+information disclosure of adjacent heap memory or, in rare cases, a
+segmentation fault. Only rasters stored in GDAL’s virtual filesystem were
+affected.</p>
+<p>This issue has severity “low” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security policy</span></a>.</p>
+</section>
+<section id="s-cve-2026-53878-header-injection-possibility-since-domainnamevalidator-accepted-newlines-in-input">
+<span id="cve-2026-53878-header-injection-possibility-since-domainnamevalidator-accepted-newlines-in-input"></span><h2>CVE-2026-53878: Header injection possibility since <code class="docutils literal notranslate"><span class="pre">DomainNameValidator</span></code> accepted newlines in input<a class="headerlink" href="#cve-2026-53878-header-injection-possibility-since-domainnamevalidator-accepted-newlines-in-input" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../ref/validators.html#django.core.validators.DomainNameValidator" title="django.core.validators.DomainNameValidator"><code class="xref py py-class docutils literal notranslate"><span class="pre">DomainNameValidator</span></code></a> accepted newlines in
+domain names. If such values were included in HTTP responses, header injection
+attacks were possible. Django itself wasn’t vulnerable because
+<a class="reference internal" href="../ref/request-response.html#django.http.HttpResponse" title="django.http.HttpResponse"><code class="xref py py-class docutils literal notranslate"><span class="pre">HttpResponse</span></code></a> prohibits newlines in HTTP headers.</p>
+<p>The vulnerability only affected uses of <code class="docutils literal notranslate"><span class="pre">DomainNameValidator</span></code> outside Django
+form fields, as <code class="docutils literal notranslate"><span class="pre">CharField</span></code> strips newlines by default.</p>
+<p>This issue has severity “low” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security policy</span></a>.</p>
+</section>
+<section id="s-bugfixes">
+<span id="bugfixes"></span><h2>Bugfixes<a class="headerlink" href="#bugfixes" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Fixed a regression in Django 6.0 where the PBKDF2 and MD5 password hashers
+raised <a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#UnicodeDecodeError" title="(in Python v3.14)"><code class="xref py py-exc docutils literal notranslate"><span class="pre">UnicodeDecodeError</span></code></a> for <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#bytes" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a> passwords that were not
+valid UTF-8. Passwords supplied as <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> or as UTF-8 <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#bytes" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a>
+are unaffected (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/37184">#37184</a>).</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Django 6.0.7 release notes</a><ul>
+<li><a class="reference internal" href="#cve-2026-48588-potential-exposure-of-private-data-via-cached-set-cookie-response">CVE-2026-48588: Potential exposure of private data via cached <code class="docutils literal notranslate"><span class="pre">Set-Cookie</span></code> response</a></li>
+<li><a class="reference internal" href="#cve-2026-53877-heap-buffer-over-read-in-gdalraster">CVE-2026-53877: Heap buffer over-read in <code class="docutils literal notranslate"><span class="pre">GDALRaster</span></code></a></li>
+<li><a class="reference internal" href="#cve-2026-53878-header-injection-possibility-since-domainnamevalidator-accepted-newlines-in-input">CVE-2026-53878: Header injection possibility since <code class="docutils literal notranslate"><span class="pre">DomainNameValidator</span></code> accepted newlines in input</a></li>
+<li><a class="reference internal" href="#bugfixes">Bugfixes</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="6.0.8.html"
+                          title="previous chapter">Django 6.0.8 release notes</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="6.0.6.html"
+                          title="next chapter">Django 6.0.6 release notes</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/releases/6.0.7.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="6.0.8.html" title="Django 6.0.8 release notes">previous</a>
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="6.0.6.html" title="Django 6.0.6 release notes">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

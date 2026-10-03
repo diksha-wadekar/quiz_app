@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>How to release Django &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../_static/default.css?v=bf4d74af" />
+    <script src="../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="The Django source code repository" href="git.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Module index" href="../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="git.html" title="The Django source code repository">previous</a>
+     |
+    <a href="index.html" title="Django internals" accesskey="U">up</a></div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="internals-howto-release-django">
+            
+  <section id="s-how-to-release-django">
+<span id="how-to-release-django"></span><h1>How to release Django<a class="headerlink" href="#how-to-release-django" title="Link to this heading">¶</a></h1>
+<p>This document explains how to release Django.</p>
+<p><strong>Please, keep these instructions up-to-date if you make changes!</strong> The point
+here is to be descriptive, not prescriptive, so feel free to streamline or
+otherwise make changes, but <strong>update this document accordingly!</strong></p>
+<section id="s-overview">
+<span id="overview"></span><h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<p>There are three types of releases that you might need to make:</p>
+<ul class="simple">
+<li><p>Security releases: disclosing and fixing a vulnerability. This’ll
+generally involve two or three simultaneous releases – e.g.
+3.2.x, 4.0.x, and, depending on timing, perhaps a 4.1.x.</p></li>
+<li><p>Regular version releases: either a final release (e.g. 4.1) or a
+bugfix update (e.g. 4.1.1).</p></li>
+<li><p>Pre-releases: e.g. 4.2 alpha, beta, or rc.</p></li>
+</ul>
+<p>The short version of the steps involved is:</p>
+<ol class="arabic simple">
+<li><p>If this is a security release, pre-notify the security distribution list
+one week before the actual release.</p></li>
+<li><p>Proofread the release notes, looking for organization and writing errors.
+Draft a blog post and email announcement.</p></li>
+<li><p>Update version numbers and create the release artifacts.</p></li>
+<li><p>Create the new <code class="docutils literal notranslate"><span class="pre">Release</span></code> in the admin on <code class="docutils literal notranslate"><span class="pre">djangoproject.com</span></code>.</p>
+<ol class="arabic simple">
+<li><p>Set the proper date but ensure the flag <code class="docutils literal notranslate"><span class="pre">is_active</span></code> is disabled.</p></li>
+<li><p>Upload the artifacts (tarball, wheel, and checksums).</p></li>
+</ol>
+</li>
+<li><p>Verify package(s) signatures, check if they can be installed, and ensure
+minimal functionality.</p></li>
+<li><p>Upload the new version(s) to PyPI.</p></li>
+<li><p>Enable the <code class="docutils literal notranslate"><span class="pre">is_active</span></code> flag for each release in the admin on
+<code class="docutils literal notranslate"><span class="pre">djangoproject.com</span></code>.</p></li>
+<li><p>Post the blog entry and send out the email announcements.</p></li>
+<li><p>Update version numbers post-release in stable branch(es).</p></li>
+<li><p>Add stub release notes for the next patch release in <code class="docutils literal notranslate"><span class="pre">main</span></code> and backport.</p></li>
+</ol>
+<p>There are a lot of details, so please read on.</p>
+<div class="admonition-use-the-checklists-app admonition" id="checklist-generator">
+<p class="admonition-title">Use the checklists app</p>
+<p>To generate a checklist compiling the tasks described below as relevant to
+the specific release(s) you are issuing, use the checklists app in the
+<a class="reference external" href="https://www.djangoproject.com/admin/checklists/">project admin</a>. This
+populates a lot of boilerplate you will need for announcements, CVE
+publication, and hashes for commit messages. By using this app for preparing
+security issue metadata, your peer releasers can check your entries and
+consult them again in the future. See <a class="reference external" href="https://www.djangoproject.com/checklists/release/5.2.4/">example checklist</a>.</p>
+</div>
+</section>
+<section id="s-prerequisites">
+<span id="prerequisites"></span><h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">¶</a></h2>
+<p>You’ll need a few things before getting started. If this is your first release,
+you’ll need to coordinate with another releaser to get all these things lined
+up, and write to the Ops mailing list requesting the required access and
+permissions.</p>
+<ul>
+<li><p>A Unix environment with these tools installed (in alphabetical order):</p>
+<ul class="simple">
+<li><p>bash (version 4.0+)</p></li>
+<li><p>git</p></li>
+<li><p>GPG</p></li>
+<li><p>make</p></li>
+<li><p>man</p></li>
+<li><p>hashing tools (typically <code class="docutils literal notranslate"><span class="pre">md5sum</span></code>, <code class="docutils literal notranslate"><span class="pre">sha1sum</span></code>, and <code class="docutils literal notranslate"><span class="pre">sha256sum</span></code> on
+Linux, or <code class="docutils literal notranslate"><span class="pre">md5</span></code> and <code class="docutils literal notranslate"><span class="pre">shasum</span></code> on macOS)</p></li>
+<li><p>python</p></li>
+</ul>
+</li>
+<li><p>A GPG key pair. Securely store the private part, and protect it with a
+passphrase. The public part needs to be uploaded to your GitHub account.</p>
+<div class="admonition-more-than-one-gpg-key admonition">
+<p class="admonition-title">More than one GPG key</p>
+<p>If the key you want to use is not your default signing key, you’ll need to
+add <code class="docutils literal notranslate"><span class="pre">-u</span> <span class="pre">you&#64;example.com</span></code> to every GPG signing command shown below, where
+<code class="docutils literal notranslate"><span class="pre">you&#64;example.com</span></code> is the email address associated with the key you want
+to use.</p>
+</div>
+</li>
+<li><p>A clean Python virtual environment (Python 3.10+, pip 26.1+) to build
+artifacts.</p></li>
+<li><p>Access to <a class="reference external" href="https://pypi.org/project/Django/">Django’s project on PyPI</a> to
+upload binaries, ideally with extra permissions to <a class="reference external" href="https://pypi.org/help/#yanked">yank a release</a> if necessary. Ensure your PyPI account
+only uses WebAuthn-based authentication factors, not TOTP (one-time codes).
+Create an API token following the <a class="reference external" href="https://pypi.org/help/#apitoken">official documentation</a>, and set up your <code class="docutils literal notranslate"><span class="pre">$HOME/.pypirc</span></code> file
+like this:</p>
+<div class="literal-block-wrapper docutils container" id="id10">
+<div class="code-block-caption"><span class="caption-text"><code class="docutils literal notranslate"><span class="pre">~/.pypirc</span></code></span><a class="headerlink" href="#id10" title="Link to this code">¶</a></div>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[distutils]</span>
+<span class="w">  </span><span class="na">index-servers</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="na">pypi</span>
+<span class="w">    </span><span class="na">django</span>
+
+<span class="k">[pypi]</span>
+<span class="w">  </span><span class="na">username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">__token__</span>
+<span class="w">  </span><span class="na">password</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="c1"># User-scoped or project-scoped token, to set as the default.</span>
+
+<span class="k">[django]</span>
+<span class="w">  </span><span class="na">repository</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">https://upload.pypi.org/legacy/</span>
+<span class="w">  </span><span class="na">username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">__token__</span>
+<span class="w">  </span><span class="na">password</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="c1"># A project token.</span>
+</pre></div>
+</div>
+</div>
+</li>
+<li><p>Access to <a class="reference external" href="https://app.transifex.com/django/django/">Django’s project on Transifex</a>, with a Manager role. Generate
+an API Token in the <a class="reference external" href="https://app.transifex.com/user/settings/api/">user setting section</a> and set up your
+<code class="docutils literal notranslate"><span class="pre">$HOME/.transifexrc</span></code> file like this:</p>
+<div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text"><code class="docutils literal notranslate"><span class="pre">~/.transifexrc</span></code></span><a class="headerlink" href="#id11" title="Link to this code">¶</a></div>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[https://www.transifex.com]</span>
+<span class="w">  </span><span class="na">rest_hostname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">https://rest.api.transifex.com</span>
+<span class="w">  </span><span class="na">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="c1"># API token</span>
+</pre></div>
+</div>
+</div>
+</li>
+<li><p>Access to the Django admin on <code class="docutils literal notranslate"><span class="pre">djangoproject.com</span></code> as a “Site maintainer”.</p></li>
+<li><p>Access to create a post in the <a class="reference external" href="https://forum.djangoproject.com/c/announcements/7">Django Forum - Announcements category</a> and to send emails to
+the <a class="reference external" href="https://groups.google.com/g/django-announce/">django-announce</a>
+mailing list.</p></li>
+<li><p>Access to the <code class="docutils literal notranslate"><span class="pre">django-security</span></code> repo in GitHub. Among other things, this
+provides access to the pre-notification distribution list (needed for
+security release preparation tasks).</p></li>
+<li><p>Access to the Django project on <a class="reference external" href="https://readthedocs.org/projects/django/">Read the Docs</a>.</p></li>
+</ul>
+</section>
+<section id="s-pre-release-tasks">
+<span id="pre-release-tasks"></span><h2>Pre-release tasks<a class="headerlink" href="#pre-release-tasks" title="Link to this heading">¶</a></h2>
+<p>A few items need to be taken care of before even beginning the release process.
+This stuff starts about a week before the release; most of it can be done
+any time leading up to the actual release.</p>
+<section id="s-or-more-days-before-a-security-release">
+<span id="or-more-days-before-a-security-release"></span><h3>10 (or more) days before a security release<a class="headerlink" href="#or-more-days-before-a-security-release" title="Link to this heading">¶</a></h3>
+<ol class="arabic">
+<li><p>Reserve one <a class="reference external" href="https://www.cve.org/About/Overview/">CVE ID</a> per security
+issue as follows. (Or, if you lack CNA credentials, email
+<code class="docutils literal notranslate"><span class="pre">cna&#64;djangoproject.com</span></code> with a request.)</p>
+<ul>
+<li><p>Enable virtual environment with <a class="extlink-pypi reference external" href="https://pypi.org/project/cvelib/">cvelib</a> installed.</p></li>
+<li><p>Export user information:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">CVE_USER</span><span class="o">=</span>&lt;user-email&gt;@djangoproject.com<span class="w"> </span><span class="nv">CVE_ORG</span><span class="o">=</span>DSF
+</pre></div>
+</div>
+</li>
+<li><p>Reserve:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>cve<span class="w"> </span>--interactive<span class="w"> </span>reserve<span class="w"> </span>&lt;quantity&gt;
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+<li><p>Generate the relevant (private) patch(es) using <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">format-patch</span></code>, one
+for the <code class="docutils literal notranslate"><span class="pre">main</span></code> branch and one for each stable branch being patched.</p></li>
+</ol>
+</section>
+<section id="s-a-week-before-a-security-release">
+<span id="a-week-before-a-security-release"></span><h3>A week before a security release<a class="headerlink" href="#a-week-before-a-security-release" title="Link to this heading">¶</a></h3>
+<ol class="arabic">
+<li><p>Send out pre-notification exactly <strong>one week</strong> before the security release.
+The template for that email and a list of the recipients are in the private
+<code class="docutils literal notranslate"><span class="pre">django-security</span></code> GitHub wiki. BCC the pre-notification recipients, and be
+sure to include the relevant CVE IDs. Attach all the relevant patches
+(targeting <code class="docutils literal notranslate"><span class="pre">main</span></code> and the stable branches), and sign the email text with
+the key you’ll use for the release, with a command like:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>gpg<span class="w"> </span>--clearsign<span class="w"> </span>--digest-algo<span class="w"> </span>SHA256<span class="w"> </span>prenotification-email.txt
+</pre></div>
+</div>
+</li>
+<li><p><a class="reference internal" href="security.html#security-disclosure"><span class="std std-ref">Notify django-announce</span></a> of the upcoming
+security release with a general message such as:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Notice of upcoming Django security releases (3.2.24, 4.2.10 and 5.0.2)
+
+Django versions 5.0.2, 4.2.10, and 3.2.24 will be released on Tuesday,
+February 6th, 2024 around 1500 UTC. They will fix one security defect
+with severity &quot;moderate&quot;.
+
+For details of severity levels, see:
+https://docs.djangoproject.com/en/dev/internals/security/#how-django-discloses-security-issues
+</pre></div>
+</div>
+</li>
+<li><p>Prepare issue metadata:
+* Severity
+* Short description
+* Reporter
+* Remediator
+* Reported at
+* Confirmed at (usually date CVE reserved)
+* CWE Problem Type
+* CAPEC Impact Type
+* CVSS (4.0) Score &amp; Vector</p></li>
+</ol>
+</section>
+<section id="s-a-few-days-before-any-release">
+<span id="a-few-days-before-any-release"></span><h3>A few days before any release<a class="headerlink" href="#a-few-days-before-any-release" title="Link to this heading">¶</a></h3>
+<ol class="arabic">
+<li><p>As the release approaches, watch Trac to make sure no release blockers are
+left for the upcoming release. Under exceptional circumstances, such as to
+meet a pre-determined security release date, a release could still go ahead
+with an open release blocker. The releaser is trusted with the decision to
+release with an open release blocker or to postpone the release date of a
+non-security release if required.</p></li>
+<li><p>Check with the other mergers to make sure they don’t have any uncommitted
+changes for the release.</p></li>
+<li><p>Proofread the release notes, including looking at the online version to
+<a class="reference internal" href="contributing/writing-documentation.html#documentation-link-check"><span class="std std-ref">catch any broken links</span></a> or reST errors, and
+make sure the release notes contain the correct date.</p></li>
+<li><p>Double-check that the release notes mention deprecation timelines
+for any APIs noted as deprecated, and that they mention any changes
+in Python version support.</p></li>
+<li><p>Double-check that the release notes index has a link to the notes
+for the new release; this will be in <code class="docutils literal notranslate"><span class="pre">docs/releases/index.txt</span></code>.</p></li>
+<li><p>If this is a <a class="reference internal" href="release-process.html#term-Feature-release"><span class="xref std std-term">feature release</span></a>, ensure translations from Transifex
+have been integrated.</p>
+<p>In addition to having a configured Transifex account, ensure that the <a class="reference external" href="https://developers.transifex.com/docs/cli">tx
+CLI</a> is available in your
+<code class="docutils literal notranslate"><span class="pre">PATH</span></code>. You can then fetch all translations since a given date by running:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python<span class="w"> </span>scripts/manage_translations.py<span class="w"> </span>fetch<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span><span class="w"> </span>--since<span class="o">=</span>&lt;some<span class="w"> </span>date&gt;
+</pre></div>
+</div>
+<p>To determine a good value for <code class="docutils literal notranslate"><span class="pre">--since</span></code>, check the date of the most recent
+commit with wording similar to <code class="docutils literal notranslate"><span class="pre">Updated</span> <span class="pre">translations</span> <span class="pre">from</span> <span class="pre">Transifex</span></code> and
+use a date a few days prior.</p>
+<p>This command takes some time to run. When done, carefully inspect the output
+for potential errors and/or warnings. If there are some, you will need to
+debug and resolve them on a case by case basis.</p>
+<p>The recently fetched translations need some manual adjusting. First of all,
+the <code class="docutils literal notranslate"><span class="pre">PO-Revision-Date</span></code> values must be manually bumped to be later than
+<code class="docutils literal notranslate"><span class="pre">POT-Creation-Date</span></code>. You can use a command similar to this to bulk update
+all the <code class="docutils literal notranslate"><span class="pre">.po</span></code> files (compare the diff against the relevant stable branch):</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>diff<span class="w"> </span>--name-only<span class="w"> </span>stable/5.0.x<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;\.po&quot;</span><span class="w">  </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>sed<span class="w"> </span>-ri<span class="w"> </span><span class="s2">&quot;s/PO-Revision-Date: [0-9\-]+ /PO-Revision-Date: </span><span class="k">$(</span>date<span class="w"> </span>-I<span class="k">)</span><span class="s2"> /g&quot;</span>
+</pre></div>
+</div>
+<p>Lastly, commit the changed/added files (both <code class="docutils literal notranslate"><span class="pre">.po</span></code> and <code class="docutils literal notranslate"><span class="pre">.mo</span></code>) and create
+a new PR targeting the stable branch of the corresponding release (example
+<a class="reference external" href="https://github.com/django/django/pull/16715">PR updating translations for 4.2</a>).</p>
+<p>Once merged, forward port the changes into <code class="docutils literal notranslate"><span class="pre">main</span></code> (<a class="extlink-commit reference external" href="https://github.com/django/django/commit/cb27e5b9c0703fb0edd70b2138e3e53a78c9551d">example commit</a>).</p>
+</li>
+<li><p><a class="reference internal" href="contributing/writing-documentation.html#django-admin-manpage"><span class="std std-ref">Update the django-admin manual page</span></a>:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>docs
+$<span class="w"> </span>make<span class="w"> </span>man
+$<span class="w"> </span>man<span class="w"> </span>_build/man/django-admin.1<span class="w">  </span><span class="c1"># do a quick sanity check</span>
+$<span class="w"> </span>cp<span class="w"> </span>_build/man/django-admin.1<span class="w"> </span>man/django-admin.1
+</pre></div>
+</div>
+<p>and then commit the changed man page.</p>
+</li>
+<li><p>If this is the “dot zero” release of a new series, create a new branch from
+the current stable branch in the <a class="reference external" href="https://github.com/django/django-docs-translations">django-docs-translations</a> repository. For
+example, when releasing Django 4.2:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>stable/4.2.x<span class="w"> </span>origin/stable/4.1.x
+$<span class="w"> </span>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>stable/4.2.x:stable/4.2.x
+</pre></div>
+</div>
+</li>
+<li><p>Write the announcement blog post for the release. You can enter it into the
+admin at any time and mark it as inactive. Here are a few examples: <a class="reference external" href="https://www.djangoproject.com/weblog/2013/feb/19/security/">example
+security release announcement</a>, <a class="reference external" href="https://www.djangoproject.com/weblog/2012/mar/23/14/">example regular release announcement</a>,
+<a class="reference external" href="https://www.djangoproject.com/weblog/2012/nov/27/15-beta-1/">example pre-release announcement</a>.</p></li>
+</ol>
+<section id="s-a-few-days-before-a-feature-freeze">
+<span id="a-few-days-before-a-feature-freeze"></span><h4>A few days before a feature freeze<a class="headerlink" href="#a-few-days-before-a-feature-freeze" title="Link to this heading">¶</a></h4>
+<p>In preparation for the alpha release, the directory
+<code class="docutils literal notranslate"><span class="pre">/home/www/www/media/releases/A.B</span></code> must be created on the djangoproject
+server.</p>
+<p>Before the feature freeze, a branch targeting <code class="docutils literal notranslate"><span class="pre">main</span></code> must be created to
+prepare for the next feature release. It should be reviewed and approved a few
+days before the freeze, allowing it to be merged after the stable branch is
+cut. The following items should be addressed in this branch:</p>
+<ol class="arabic simple">
+<li><p>Update the <code class="docutils literal notranslate"><span class="pre">VERSION</span></code> tuple in <code class="docutils literal notranslate"><span class="pre">django/__init__.py</span></code>, incrementing to the
+next expected release (<a class="extlink-commit reference external" href="https://github.com/django/django/commit/96700c7b378c592f0b1732302c22af2fd2c87fc6">example commit</a>).</p></li>
+<li><p>Create a stub release note for the next feature release. Use the stub from
+the previous feature release or copy the contents from the current version
+and delete most of the contents leaving only the headings
+(<a class="extlink-commit reference external" href="https://github.com/django/django/commit/9b5ad4056ccf9ff7ea548f72d28eb66c1b4f84cc">example commit</a>).</p></li>
+<li><p>Remove <code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">versionadded::</span></code> and <code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">versionchanged::</span></code> annotations in the
+documentation from two releases ago, as well as any remaining older
+annotations. For example, in Django 5.1, notes for 4.2 will be removed
+(<a class="extlink-commit reference external" href="https://github.com/django/django/commit/9edb7833b89e811eefd94974fb987f4605b0c0d7">example commit</a>).</p></li>
+<li><p>Remove features that have reached the end of their deprecation cycle,
+including their docs and the <code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">deprecated::</span></code> annotation. Each removal
+should be done in a separate commit for clarity. In the commit message, add
+a <code class="docutils literal notranslate"><span class="pre">Refs</span> <span class="pre">#XXXXX</span> <span class="pre">--</span></code> prefix linking to the original ticket where the
+deprecation began if possible. Make sure this gets noted in the removed
+features section in the release notes (<a class="extlink-commit reference external" href="https://github.com/django/django/commit/f2d9c76aa7096ef3eed675b9eb824858f9dd81e5">example commit</a>).</p></li>
+<li><p>Advance the deprecation warnings (<a class="extlink-commit reference external" href="https://github.com/django/django/commit/0c0bda7f79a2de89a55cfcc8e60467d6588f406f">example commit</a>).</p></li>
+<li><p>Increase the default PBKDF2 iterations in
+<code class="docutils literal notranslate"><span class="pre">django.contrib.auth.hashers.PBKDF2PasswordHasher</span></code> by about 20%
+(pick a round number). Run the tests, and update the 3 failing
+hasher tests with the new values. Make sure this gets noted in the
+release notes (<a class="extlink-commit reference external" href="https://github.com/django/django/commit/7288866da4dddf3705148c703421858ec19cdb78">example commit</a>).</p></li>
+</ol>
+<p>Concrete examples for past feature release bootstrap branches: <a class="reference external" href="https://github.com/django/django/pull/18127">5.2 bootstrap</a>, <a class="reference external" href="https://github.com/django/django/pull/17246">5.1 bootstrap</a>, <a class="reference external" href="https://github.com/django/django/pull/16432">5.0 bootstrap</a>.</p>
+</section>
+</section>
+</section>
+<section id="s-feature-freeze-tasks">
+<span id="feature-freeze-tasks"></span><h2>Feature freeze tasks<a class="headerlink" href="#feature-freeze-tasks" title="Link to this heading">¶</a></h2>
+<ol class="arabic">
+<li><p>Remove empty sections from the release notes (<a class="extlink-commit reference external" href="https://github.com/django/django/commit/9e6e58bad237a80ddd5e3ab8b834cecdaad8455e">example commit</a>).</p></li>
+<li><p>Build the release notes locally and read them. Make any necessary change
+to improve flow or fix grammar (<a class="extlink-commit reference external" href="https://github.com/django/django/commit/435bdab93889dae01e71c79598edab10627cc1f9">example commit</a>).</p></li>
+<li><p>Create a new stable branch from <code class="docutils literal notranslate"><span class="pre">main</span></code>. Be sure to fetch and update
+<code class="docutils literal notranslate"><span class="pre">upstream</span></code> to latest. For example, when feature freezing Django 5.2:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>fetch<span class="w"> </span>upstream
+$<span class="w"> </span>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>stable/5.2.x<span class="w"> </span>upstream/main
+$<span class="w"> </span>git<span class="w"> </span>push<span class="w"> </span>upstream<span class="w"> </span>-u<span class="w"> </span>stable/5.2.x:stable/5.2.x
+</pre></div>
+</div>
+<p>At the same time, update the <code class="docutils literal notranslate"><span class="pre">django_next_version</span></code> variable in
+<code class="docutils literal notranslate"><span class="pre">docs/conf.py</span></code> on the stable release branch to point to the new
+development version. For example, when creating <code class="docutils literal notranslate"><span class="pre">stable/5.2.x</span></code>, set
+<code class="docutils literal notranslate"><span class="pre">django_next_version</span></code> to <code class="docutils literal notranslate"><span class="pre">'6.0'</span></code> on the new stable branch
+(<a class="extlink-commit reference external" href="https://github.com/django/django/commit/1eb62e5b622ef7fd6e0123d8bbf6662d893d5d08">example commit</a>).</p>
+</li>
+<li><p>Create <code class="docutils literal notranslate"><span class="pre">Release</span></code> entries for the next version in the <a class="reference external" href="https://www.djangoproject.com/admin/releases/release/add/">admin</a> on
+<code class="docutils literal notranslate"><span class="pre">djangoproject.com</span></code>. Add one for each milestone (alpha, beta, rc, and
+final), leaving <em>is active</em> unset to mark them as unreleased. Set target
+dates per the agreed schedule, and set the LTS flag if applicable. The
+<code class="docutils literal notranslate"><span class="pre">X.Y</span></code> roadmap page will be available at <code class="docutils literal notranslate"><span class="pre">/download/X.Y/roadmap/</span></code>.</p>
+<p>For example, when creating <code class="docutils literal notranslate"><span class="pre">stable/5.2.x</span></code>, add <code class="docutils literal notranslate"><span class="pre">Release</span></code> entries for
+<code class="docutils literal notranslate"><span class="pre">6.0a1</span></code>, <code class="docutils literal notranslate"><span class="pre">6.0b1</span></code>, <code class="docutils literal notranslate"><span class="pre">6.0rc1</span></code>, and <code class="docutils literal notranslate"><span class="pre">6.0</span></code>. The <code class="docutils literal notranslate"><span class="pre">6.0</span></code> roadmap can be
+then reviewed at <a class="reference external" href="https://www.djangoproject.com/download/6.0/roadmap/">https://www.djangoproject.com/download/6.0/roadmap/</a>.</p>
+</li>
+<li><p>Go to the <a class="reference external" href="https://www.djangoproject.com/admin/docs/documentrelease/add/">Add document release page in the admin</a>, create a new
+<code class="docutils literal notranslate"><span class="pre">DocumentRelease</span></code> object for the English language for the newly created
+<code class="docutils literal notranslate"><span class="pre">Release</span></code> object. Do not mark this as default.</p>
+</li>
+<li><p>Add the new branch to <a class="reference external" href="https://readthedocs.org/projects/django/">Read the Docs</a>. Since the automatically
+generated version names (“stable-A.B.x”) differ from the version names used
+in Read the Docs (“A.B.x”), update the Read the Docs config for the version
+to point to the slug <code class="docutils literal notranslate"><span class="pre">A.B.x</span></code> and set it as active. <a class="reference external" href="https://github.com/readthedocs/readthedocs.org/issues/12483">See more details</a>.</p></li>
+<li><p><a class="reference external" href="https://github.com/pypa/trove-classifiers/pulls?q=is%3Apr+django+trove+classifier">Create a PR on PyPI proposing the new Trove classifier</a>.
+For example <code class="docutils literal notranslate"><span class="pre">Framework</span> <span class="pre">::</span> <span class="pre">Django</span> <span class="pre">::</span> <span class="pre">5.2</span></code>.</p></li>
+<li><p>Update the current branch under active development and add pre-release
+branch in the <a class="reference external" href="https://code.djangoproject.com/#Djangoreleaseprocess">Django release process</a> on Trac.</p></li>
+<li><p>Update the <code class="docutils literal notranslate"><span class="pre">docs/fixtures/doc_releases.json</span></code> JSON fixture for
+djangoproject.com, so people without access to the production DB can still
+run an up-to-date copy of the docs site
+(<a class="reference external" href="https://github.com/django/djangoproject.com/pull/1446">example PR</a>).
+This will be merged after the final release.</p></li>
+</ol>
+</section>
+<section id="s-actually-rolling-the-release">
+<span id="actually-rolling-the-release"></span><h2>Actually rolling the release<a class="headerlink" href="#actually-rolling-the-release" title="Link to this heading">¶</a></h2>
+<p>OK, this is the fun part, where we actually push out a release! If you’re
+issuing <strong>multiple releases</strong>, repeat these steps for each release.</p>
+<ol class="arabic">
+<li><p>Check <a class="reference external" href="https://djangoci.com">Jenkins</a> is green for the version(s) you’re putting out. You
+probably shouldn’t issue a release until it’s green, and you should make
+sure that the latest green run includes the changes that you are releasing.</p>
+</li>
+<li><p>Cleanup the release notes for this release. Make these changes in <code class="docutils literal notranslate"><span class="pre">main</span></code>
+and backport to all branches where the release notes for a particular
+version are located.</p>
+<ol class="arabic simple">
+<li><p>For a feature release, remove the <code class="docutils literal notranslate"><span class="pre">UNDER</span> <span class="pre">DEVELOPMENT</span></code> header at the top
+of the release notes, remove the <code class="docutils literal notranslate"><span class="pre">Expected</span></code> prefix and update the
+release date, if necessary (<a class="extlink-commit reference external" href="https://github.com/django/django/commit/1994a2643881a9e3f9fa8d3e0794c1a9933a1831">example commit</a>).</p></li>
+<li><p>For a patch release, remove the <code class="docutils literal notranslate"><span class="pre">Expected</span></code> prefix and update the
+release date for all releases, if necessary (<a class="extlink-commit reference external" href="https://github.com/django/django/commit/34a503162fe222033a1cd3249bccad014fcd1d20">example commit</a>).</p></li>
+</ol>
+</li>
+<li><p>Regenerate a fresh, dedicated virtual environment for the release tools
+using a cooldown:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>build<span class="w"> </span>twine<span class="w"> </span>--uploaded-prior-to<span class="o">=</span>P7D
+</pre></div>
+</div>
+</li>
+<li><p>A release always begins from a release branch, so you should make sure
+you’re on an up-to-date stable branch. For example:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>checkout<span class="w"> </span>stable/4.1.x
+$<span class="w"> </span>git<span class="w"> </span>pull
+</pre></div>
+</div>
+</li>
+<li><p>If this is a security release, merge the appropriate patches from
+<code class="docutils literal notranslate"><span class="pre">django-security</span></code>. Rebase these patches as necessary to make each one a
+plain commit on the release branch rather than a merge commit. To ensure
+this, merge them with the <code class="docutils literal notranslate"><span class="pre">--ff-only</span></code> flag; for example:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>checkout<span class="w"> </span>stable/4.1.x
+$<span class="w"> </span>git<span class="w"> </span>merge<span class="w"> </span>--ff-only<span class="w"> </span>security/4.1.x
+</pre></div>
+</div>
+<p>(This assumes <code class="docutils literal notranslate"><span class="pre">security/4.1.x</span></code> is a branch in the <code class="docutils literal notranslate"><span class="pre">django-security</span></code> repo
+containing the necessary security patches for the next release in the 4.1
+series.)</p>
+<p>If git refuses to merge with <code class="docutils literal notranslate"><span class="pre">--ff-only</span></code>, switch to the security-patch
+branch and rebase it on the branch you are about to merge it into (<code class="docutils literal notranslate"><span class="pre">git</span>
+<span class="pre">checkout</span> <span class="pre">security/4.1.x;</span> <span class="pre">git</span> <span class="pre">rebase</span> <span class="pre">stable/4.1.x</span></code>) and then switch back and
+do the merge. Make sure the commit message for each security fix explains
+that the commit is a security fix and that an announcement will follow
+(<a class="extlink-commit reference external" href="https://github.com/django/django/commit/bf39978a53f117ca02e9a0c78b76664a41a54745">example security commit</a>).</p>
+</li>
+<li><p>Update the version number in <code class="docutils literal notranslate"><span class="pre">django/__init__.py</span></code> for the release.
+Please see <a class="reference internal" href="#notes-on-setting-the-version-tuple">notes on setting the VERSION tuple</a> below for details
+on <code class="docutils literal notranslate"><span class="pre">VERSION</span></code> (<a class="extlink-commit reference external" href="https://github.com/django/django/commit/2719a7f8c161233f45d34b624a9df9392c86cc1b">example commit</a>).</p>
+<ol class="arabic simple">
+<li><p>If this is a pre-release package also update the “Development Status”
+trove classifier in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> to reflect this. An <code class="docutils literal notranslate"><span class="pre">rc</span></code>
+pre-release should not change the trove classifier (<a class="extlink-commit reference external" href="https://github.com/django/django/commit/759921c8e9ad151932fc913ab429fef0a6112ef8">example
+commit for alpha release</a>,
+<a class="extlink-commit reference external" href="https://github.com/django/django/commit/25fec8940b24107e21314ab6616e18ce8dec1c1c">example commit for beta release</a>).</p></li>
+<li><p>Otherwise, make sure the classifier is set to
+<code class="docutils literal notranslate"><span class="pre">Development</span> <span class="pre">Status</span> <span class="pre">::</span> <span class="pre">5</span> <span class="pre">-</span> <span class="pre">Production/Stable</span></code>.</p></li>
+</ol>
+</li>
+</ol>
+<section id="s-building-the-artifacts">
+<span id="building-the-artifacts"></span><h3>Building the artifacts<a class="headerlink" href="#building-the-artifacts" title="Link to this heading">¶</a></h3>
+<div class="admonition-optionally-use-helper-scripts admonition">
+<p class="admonition-title">Optionally use helper scripts</p>
+<p>You can streamline some of the steps below using helper scripts from the
+<code class="docutils literal notranslate"><span class="pre">scripts</span></code> folder:</p>
+<ul class="simple">
+<li><p>Release script example run:</p></li>
+</ul>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nv">PGP_KEY_ID</span><span class="o">=</span>&lt;key-id&gt;<span class="w"> </span><span class="nv">PGP_KEY_URL</span><span class="o">=</span>&lt;key-url&gt;<span class="w"> </span><span class="nv">DEST_FOLDER</span><span class="o">=</span>~/releases<span class="w"> </span>scripts/do_django_release.py
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Verify the release (after artifacts were uploaded):</p></li>
+</ul>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nv">VERSION</span><span class="o">=</span><span class="m">5</span>.2.1<span class="w"> </span>scripts/verify_release.sh
+</pre></div>
+</div>
+</div>
+<ol class="arabic">
+<li><p>Tag the release using <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">tag</span></code>. For example:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>tag<span class="w"> </span>--sign<span class="w"> </span>--message<span class="o">=</span><span class="s2">&quot;Tag 4.1.1&quot;</span><span class="w"> </span><span class="m">4</span>.1.1
+</pre></div>
+</div>
+<p>You can check your work running <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">tag</span> <span class="pre">--verify</span> <span class="pre">&lt;tag&gt;</span></code>.</p>
+</li>
+<li><p>Make sure you have an absolutely clean tree by running <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clean</span> <span class="pre">-dfx</span></code>.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">build</span></code> to generate the release packages. This will create
+the release artifacts (tarball and wheel) in a <code class="docutils literal notranslate"><span class="pre">dist/</span></code> directory.</p></li>
+<li><p>Generate the hashes of the release packages:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>dist
+$<span class="w"> </span>md5sum<span class="w"> </span>*
+$<span class="w"> </span>sha1sum<span class="w"> </span>*
+$<span class="w"> </span>sha256sum<span class="w"> </span>*
+</pre></div>
+</div>
+</li>
+<li><p>Create a “checksums” file, <code class="docutils literal notranslate"><span class="pre">Django-&lt;&lt;VERSION&gt;&gt;.checksum.txt</span></code> containing
+the hashes and release information. Start with this template and insert the
+correct version, date, GPG key ID (from
+<code class="docutils literal notranslate"><span class="pre">gpg</span> <span class="pre">--list-keys</span> <span class="pre">--keyid-format</span> <span class="pre">LONG</span></code>), release manager’s GitHub username,
+release URL, and checksums:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>This file contains MD5, SHA1, and SHA256 checksums for the source-code
+tarball and wheel files of Django &lt;&lt;VERSION&gt;&gt;, released &lt;&lt;DATE&gt;&gt;.
+
+To use this file, you will need a working install of PGP or other
+compatible public-key encryption software. You will also need to have
+the Django release manager&#39;s public key in your keyring. This key has
+the ID ``XXXXXXXXXXXXXXXX`` and can be imported from GitHub, for example,
+if using the open-source GNU Privacy Guard implementation of PGP:
+
+    curl https://github.com/&lt;&lt;RELEASE MANAGER GITHUB USERNAME&gt;&gt;.gpg | gpg --import -
+
+Once the key is imported, verify this file:
+
+    gpg --verify &lt;&lt;THIS FILENAME&gt;&gt;
+
+Once you have verified this file, you can use normal MD5, SHA1, or SHA256
+checksumming applications to generate the checksums of the Django
+package and compare them to the checksums listed below.
+
+Release packages
+================
+
+https://www.djangoproject.com/download/&lt;&lt;VERSION&gt;&gt;/tarball/
+https://www.djangoproject.com/download/&lt;&lt;VERSION&gt;&gt;/wheel/
+
+MD5 checksums
+=============
+
+&lt;&lt;MD5SUM&gt;&gt;  &lt;&lt;RELEASE TAR.GZ FILENAME&gt;&gt;
+&lt;&lt;MD5SUM&gt;&gt;  &lt;&lt;RELEASE WHL FILENAME&gt;&gt;
+
+SHA1 checksums
+==============
+
+&lt;&lt;SHA1SUM&gt;&gt;  &lt;&lt;RELEASE TAR.GZ FILENAME&gt;&gt;
+&lt;&lt;SHA1SUM&gt;&gt;  &lt;&lt;RELEASE WHL FILENAME&gt;&gt;
+
+SHA256 checksums
+================
+
+&lt;&lt;SHA256SUM&gt;&gt;  &lt;&lt;RELEASE TAR.GZ FILENAME&gt;&gt;
+&lt;&lt;SHA256SUM&gt;&gt;  &lt;&lt;RELEASE WHL FILENAME&gt;&gt;
+</pre></div>
+</div>
+</li>
+<li><p>Sign the checksum file (<code class="docutils literal notranslate"><span class="pre">gpg</span> <span class="pre">--clearsign</span> <span class="pre">--digest-algo</span> <span class="pre">SHA256</span>
+<span class="pre">Django-&lt;version&gt;.checksum.txt</span></code>). This generates a signed document,
+<code class="docutils literal notranslate"><span class="pre">Django-&lt;version&gt;.checksum.txt.asc</span></code> which you can then verify using <code class="docutils literal notranslate"><span class="pre">gpg</span>
+<span class="pre">--verify</span> <span class="pre">Django-&lt;version&gt;.checksum.txt.asc</span></code>.</p></li>
+</ol>
+</section>
+</section>
+<section id="s-making-the-release-s-available-to-the-public">
+<span id="making-the-release-s-available-to-the-public"></span><h2>Making the release(s) available to the public<a class="headerlink" href="#making-the-release-s-available-to-the-public" title="Link to this heading">¶</a></h2>
+<p>Now you’re ready to actually put the release out there. To do this:</p>
+<ol class="arabic">
+<li><p>Create a new <code class="docutils literal notranslate"><span class="pre">Release</span></code> entry in the <a class="reference external" href="https://www.djangoproject.com/admin/releases/release/add/">djangoproject.com’s admin</a>. If this is a
+security release, this should be done 15 minutes before the announced
+release time, no sooner:</p>
+<dl class="simple">
+<dt>Version</dt><dd><p>Must match the version number as defined in the tarball
+(<code class="docutils literal notranslate"><span class="pre">django-&lt;version&gt;.tar.gz</span></code>). For example: “5.2”, “4.1.1”, or “4.2rc1”.</p>
+</dd>
+<dt>Is active</dt><dd><p>Set to False until the release is fully published (last step).</p>
+</dd>
+<dt>LTS</dt><dd><p>Enable if the release is part of an <abbr title="Long Term Support">LTS</abbr>
+branch.</p>
+</dd>
+<dt>Dates</dt><dd><p>Set the release date to today. This release will not be published until
+<code class="docutils literal notranslate"><span class="pre">is_active</span></code> is enabled.</p>
+</dd>
+<dt>Artifacts</dt><dd><p>Upload the tarball (<code class="docutils literal notranslate"><span class="pre">django-&lt;version&gt;.tar.gz</span></code>), wheel
+(<code class="docutils literal notranslate"><span class="pre">django-&lt;version&gt;-py3-none-any.whl</span></code>), and checksum
+(<code class="docutils literal notranslate"><span class="pre">django-&lt;version&gt;.checksum.txt.asc</span></code>) files created earlier.</p>
+</dd>
+</dl>
+</li>
+<li><p>Test that the release packages install correctly using <code class="docutils literal notranslate"><span class="pre">pip</span></code>. Here’s one
+simple method (this just tests that the binaries are available, that they
+install correctly, and that migrations and the development server start, but
+it’ll catch silly mistakes):
+<a class="reference external" href="https://code.djangoproject.com/wiki/ReleaseTestNewVersion">https://code.djangoproject.com/wiki/ReleaseTestNewVersion</a>.</p></li>
+<li><p>Run the <a class="reference external" href="https://djangoci.com/job/confirm-release/">confirm-release</a> build on Jenkins to verify the checksum file(s)
+(e.g. use <code class="docutils literal notranslate"><span class="pre">4.2rc1</span></code> for
+<a class="reference external" href="https://media.djangoproject.com/pgp/Django-4.2rc1.checksum.txt">https://media.djangoproject.com/pgp/Django-4.2rc1.checksum.txt</a>).</p>
+</li>
+<li><p>Generate a new token for this release on PyPI, and store it in <code class="docutils literal notranslate"><span class="pre">.pypirc</span></code>
+as shown above.</p></li>
+<li><p>Upload the release packages to PyPI:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>twine<span class="w"> </span>upload<span class="w"> </span>--repository<span class="w"> </span>django<span class="w"> </span>dist/*
+</pre></div>
+</div>
+</li>
+<li><p>On PyPI, revoke the token you just created.</p></li>
+<li><p>Update the newly created <code class="docutils literal notranslate"><span class="pre">Release</span></code> in the admin in <code class="docutils literal notranslate"><span class="pre">djangoproject.com</span></code>
+and enable the <code class="docutils literal notranslate"><span class="pre">is_active</span></code> flag.</p></li>
+<li><p>Push your work and the new tag:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>push
+$<span class="w"> </span>git<span class="w"> </span>push<span class="w"> </span>--tags
+</pre></div>
+</div>
+</li>
+<li><p>Make the blog post announcing the release live.</p></li>
+<li><p>For a new version release (e.g. 4.1, 4.2), update the default stable version
+of the docs by flipping the <code class="docutils literal notranslate"><span class="pre">is_default</span></code> flag to <code class="docutils literal notranslate"><span class="pre">True</span></code> on the
+appropriate <code class="docutils literal notranslate"><span class="pre">DocumentRelease</span></code> object in the <code class="docutils literal notranslate"><span class="pre">docs.djangoproject.com</span></code>
+database (this will automatically flip it to <code class="docutils literal notranslate"><span class="pre">False</span></code> for all
+others); you can do this using the site’s admin.</p>
+<p>Create new <code class="docutils literal notranslate"><span class="pre">DocumentRelease</span></code> objects for each language that has an entry
+for the previous release. Update djangoproject.com’s <a class="reference external" href="https://github.com/django/djangoproject.com/blob/main/djangoproject/static/robots.docs.txt">robots.docs.txt</a>
+file by copying the result generated from running the command
+<code class="docutils literal notranslate"><span class="pre">manage_translations.py</span> <span class="pre">robots_txt</span></code> in the current stable branch from the
+<a class="reference external" href="https://github.com/django/django-docs-translations">django-docs-translations repository</a>. For example, when releasing Django
+4.2:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>checkout<span class="w"> </span>stable/4.2.x
+$<span class="w"> </span>git<span class="w"> </span>pull
+$<span class="w"> </span>python<span class="w"> </span>manage_translations.py<span class="w"> </span>robots_txt
+</pre></div>
+</div>
+</li>
+<li><p>Post the release announcement to the <a class="reference internal" href="mailing-lists.html#django-announce-mailing-list"><span class="std std-ref">django-announce</span></a> mailing list and the
+Django Forum. This should include a link to the announcement blog post.</p></li>
+<li><p>If this is a security release, publish the CVE metadata. (The
+<a class="reference internal" href="#checklist-generator"><span class="std std-ref">checklist app</span></a> generates JSON for this.):</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>cve<span class="w"> </span>publish<span class="w"> </span>&lt;cve-number&gt;<span class="w"> </span>--cve-json-file<span class="w"> </span>&lt;path-to-file&gt;
+</pre></div>
+</div>
+</li>
+<li><p>If this is a security release, send a separate email to
+<code class="docutils literal notranslate"><span class="pre">oss-security&#64;lists.openwall.com</span></code>. Provide “Django” plus the CVE IDs in
+the subject line. The message body should include the vulnerability details,
+for example, the announcement blog post text. Include a link to the
+announcement blog post.</p></li>
+</ol>
+</section>
+<section id="s-post-release">
+<span id="post-release"></span><h2>Post-release<a class="headerlink" href="#post-release" title="Link to this heading">¶</a></h2>
+<p>You’re almost done! All that’s left to do now is:</p>
+<ol class="arabic">
+<li><p>If this is not a pre-release, update the <code class="docutils literal notranslate"><span class="pre">VERSION</span></code> tuple in
+<code class="docutils literal notranslate"><span class="pre">django/__init__.py</span></code> again, incrementing to whatever the next expected
+release will be. For example, after releasing 4.1.1, update <code class="docutils literal notranslate"><span class="pre">VERSION</span></code> to
+<code class="docutils literal notranslate"><span class="pre">VERSION</span> <span class="pre">=</span> <span class="pre">(4,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">'alpha',</span> <span class="pre">0)</span></code> (<a class="extlink-commit reference external" href="https://github.com/django/django/commit/a4d19953d46247ee1992b3427fe652e941524272">example commit</a>).</p></li>
+<li><p>If this was an alpha release:</p>
+<ol class="arabic">
+<li><p>Add the feature release version in <a class="reference external" href="https://code.djangoproject.com/admin/ticket/versions">Trac’s versions list</a>.</p></li>
+<li><p>Create a new security branch from the freshly cut stable branch. Be sure
+to fetch and update <code class="docutils literal notranslate"><span class="pre">upstream</span></code> to latest. For example, after the 5.2
+alpha release:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>fetch<span class="w"> </span>upstream
+$<span class="w"> </span>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>security/5.2.x<span class="w"> </span>upstream/stable/5.2.x
+$<span class="w"> </span>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>-u<span class="w"> </span>security/5.2.x:security/5.2.x
+</pre></div>
+</div>
+</li>
+</ol>
+</li>
+<li><p>If this was a final release:</p>
+<ol class="arabic simple">
+<li><p>Update the <code class="docutils literal notranslate"><span class="pre">default_version</span></code> setting in the code.djangoproject.com’s
+<code class="docutils literal notranslate"><span class="pre">trac.ini</span></code> file (<a class="reference external" href="https://github.com/django/code.djangoproject.com/pull/268">example PR</a>).</p></li>
+<li><p>Update the current stable branch and remove the pre-release branch in the
+<a class="reference external" href="https://code.djangoproject.com/#Djangoreleaseprocess">Django release process</a> on Trac.</p></li>
+<li><p>Update djangoproject.com’s download page (<a class="reference external" href="https://github.com/django/djangoproject.com/pull/1444">example PR</a>).</p></li>
+<li><p>Process the older versions that will reach End-Of-Mainstream and/or
+End-Of-Life support when this final release is published:</p>
+<ol class="arabic simple">
+<li><p>Ensure that the EOL versions are mentioned in the blog post. See
+<a class="reference external" href="https://www.djangoproject.com/weblog/2025/apr/02/django-52-released/">example announcement</a>.</p></li>
+<li><p>Create a tag for the EOL stable branch and delete the stable branch.
+Inspect and use the <code class="docutils literal notranslate"><span class="pre">scripts/archive_eol_stable_branches.py</span></code> helper.</p></li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>If this was a security release, update <a class="reference internal" href="../releases/security.html"><span class="doc">Archive of security issues</span></a> with
+details of the issues addressed.</p></li>
+<li><p>If this was a pre-release, the translation catalogs need to be updated:</p>
+<ol class="arabic">
+<li><p>Make a new branch from the recently released stable branch:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>checkout<span class="w"> </span>stable/A.B.x
+$<span class="w"> </span>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>update-translations-catalog-A.B.x
+</pre></div>
+</div>
+</li>
+<li><p>Ensure that the release’s dedicated virtual environment is enabled and
+run the following:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>django
+$<span class="w"> </span>django-admin<span class="w"> </span>makemessages<span class="w"> </span>-l<span class="w"> </span>en<span class="w"> </span>--domain<span class="o">=</span>django
+processing<span class="w"> </span>locale<span class="w"> </span>en
+$<span class="w"> </span>django-admin<span class="w"> </span>makemessages<span class="w"> </span>-l<span class="w"> </span>en<span class="w"> </span>--domain<span class="o">=</span>djangojs
+processing<span class="w"> </span>locale<span class="w"> </span>en
+</pre></div>
+</div>
+</li>
+<li><p>Make a pull request against the corresponding stable branch and merge
+once approved.</p></li>
+<li><p>Forward port the updated source translations to the <code class="docutils literal notranslate"><span class="pre">main</span></code> branch
+(<a class="extlink-commit reference external" href="https://github.com/django/django/commit/aed303aff57ac990894b6354af001b0e8ea55f71">example commit</a>).</p></li>
+</ol>
+</li>
+<li><p>If this was an <code class="docutils literal notranslate"><span class="pre">alpha</span></code> pre-release, coordinate with the maintainer of
+<a class="extlink-pypi reference external" href="https://pypi.org/project/asgiref/">asgiref</a> to determine when to raise the minimum version before the
+final release. For the backport, add an upper bound on the next major
+version (example commits:
+<a class="extlink-commit reference external" href="https://github.com/django/django/commit/df35cf578f99522dd1ba864d513be95d47bab7a5">main</a>,
+<a class="extlink-commit reference external" href="https://github.com/django/django/commit/e5d2664908164d51d2daa46e375da8b6a93def03">backport</a>).</p></li>
+<li><p>If this was an <code class="docutils literal notranslate"><span class="pre">rc</span></code> pre-release, call for translations for the upcoming
+release in the <a class="reference external" href="https://forum.djangoproject.com/c/internals/i18n/14">Django Forum - Internationalization category</a>.</p></li>
+</ol>
+</section>
+<section id="s-notes-on-setting-the-version-tuple">
+<span id="notes-on-setting-the-version-tuple"></span><h2>Notes on setting the VERSION tuple<a class="headerlink" href="#notes-on-setting-the-version-tuple" title="Link to this heading">¶</a></h2>
+<p>Django’s version reporting is controlled by the <code class="docutils literal notranslate"><span class="pre">VERSION</span></code> tuple in
+<code class="docutils literal notranslate"><span class="pre">django/__init__.py</span></code>. This is a five-element tuple, whose elements
+are:</p>
+<ol class="arabic simple">
+<li><p>Major version.</p></li>
+<li><p>Minor version.</p></li>
+<li><p>Micro version.</p></li>
+<li><p>Status – can be one of “alpha”, “beta”, “rc” or “final”.</p></li>
+<li><p>Series number, for alpha/beta/RC packages which run in sequence
+(allowing, for example, “beta 1”, “beta 2”, etc.).</p></li>
+</ol>
+<p>For a final release, the status is always “final” and the series
+number is always 0. A series number of 0 with an “alpha” status will
+be reported as “pre-alpha”.</p>
+<p>Some examples:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">(4,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">&quot;final&quot;,</span> <span class="pre">0)</span></code> → “4.1.1”</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">(4,</span> <span class="pre">2,</span> <span class="pre">0,</span> <span class="pre">&quot;alpha&quot;,</span> <span class="pre">0)</span></code> → “4.2 pre-alpha”</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">(4,</span> <span class="pre">2,</span> <span class="pre">0,</span> <span class="pre">&quot;beta&quot;,</span> <span class="pre">1)</span></code> → “4.2 beta 1”</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">How to release Django</a><ul>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li><a class="reference internal" href="#pre-release-tasks">Pre-release tasks</a><ul>
+<li><a class="reference internal" href="#or-more-days-before-a-security-release">10 (or more) days before a security release</a></li>
+<li><a class="reference internal" href="#a-week-before-a-security-release">A week before a security release</a></li>
+<li><a class="reference internal" href="#a-few-days-before-any-release">A few days before any release</a><ul>
+<li><a class="reference internal" href="#a-few-days-before-a-feature-freeze">A few days before a feature freeze</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#feature-freeze-tasks">Feature freeze tasks</a></li>
+<li><a class="reference internal" href="#actually-rolling-the-release">Actually rolling the release</a><ul>
+<li><a class="reference internal" href="#building-the-artifacts">Building the artifacts</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#making-the-release-s-available-to-the-public">Making the release(s) available to the public</a></li>
+<li><a class="reference internal" href="#post-release">Post-release</a></li>
+<li><a class="reference internal" href="#notes-on-setting-the-version-tuple">Notes on setting the VERSION tuple</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="git.html"
+                          title="previous chapter">The Django source code repository</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/internals/howto-release-django.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="git.html" title="The Django source code repository">previous</a>
+     |
+    <a href="index.html" title="Django internals" accesskey="U">up</a></div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

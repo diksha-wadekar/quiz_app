@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<h3>Dashboard</h3>
+<p>Total items: {{ total }}</p>
+<div style="max-width:400px"><canvas id="chart"></canvas></div>
+{{ labels|json_script:"labels" }}
+{{ values|json_script:"values" }}
+<script src="{% static 'js/chart.umd.min.js' %}"></script>
+<script>
+new Chart(document.getElementById('chart'), {
+  type: 'doughnut',
+  data: {
+    labels: JSON.parse(document.getElementById('labels').textContent),
+    datasets: [{data: JSON.parse(document.getElementById('values').textContent)}]
+  }
+});
+</script>
+{% endblock %}

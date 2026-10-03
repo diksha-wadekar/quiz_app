@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Sprint quickstart guide &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../../_static/default.css?v=bf4d74af" />
+    <script src="../../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Contributing code" href="writing-code/index.html" />
+    <link rel="prev" title="Advice for new contributors" href="new-contributors.html" /><link rel="stylesheet" href="../../_static/console-tabs.css">
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../genindex.html">Index</a>  |
+        <a title="Module index" href="../../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="new-contributors.html" title="Advice for new contributors">previous</a>
+     |
+    <a href="../index.html" title="Django internals" accesskey="U">up</a>
+   |
+    <a href="writing-code/index.html" title="Contributing code">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="internals-contributing-sprint-quickstart">
+            
+  <section id="s-sprint-quickstart-guide">
+<span id="sprint-quickstart-guide"></span><h1>Sprint quickstart guide<a class="headerlink" href="#sprint-quickstart-guide" title="Link to this heading">¶</a></h1>
+<p>This document explains how to prepare to contribute to Django. It is intended
+for use during sprints, or by people who are already familiar with contributing
+to Python open source projects.</p>
+<p>This guide assumes you’re familiar with:</p>
+<ul class="simple">
+<li><p>Git (see <a class="reference internal" href="writing-code/working-with-git.html"><span class="doc">Working with Git and GitHub</span></a>)</p></li>
+<li><p>Managing multiple versions of Python</p></li>
+<li><p>Python dependency management, including virtual environments</p></li>
+<li><p>The concept of running tests and building documentation</p></li>
+</ul>
+<p>If any of these are unfamiliar, see <a class="reference internal" href="../../intro/contributing.html"><span class="doc">Writing your first contribution for Django</span></a> for a longer,
+step-by-step tutorial.</p>
+<section id="s-set-up">
+<span id="set-up"></span><h2>Set up<a class="headerlink" href="#set-up" title="Link to this heading">¶</a></h2>
+<ol class="arabic">
+<li><p>Fork the repository on GitHub, clone your fork to your machine, and
+configure a remote reference to Django’s upstream repository:</p>
+<div class="console-block" id="console-block-0">
+<input class="c-tab-unix" id="c-tab-0-unix" type="radio" name="console-0" checked>
+<label for="c-tab-0-unix" title="Linux/macOS">&#xf17c/&#xf179</label>
+<input class="c-tab-win" id="c-tab-0-win" type="radio" name="console-0">
+<label for="c-tab-0-win" title="Windows">&#xf17a</label>
+<section class="c-content-unix" id="c-content-0-unix">
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/YourGitHubName/django.git
+<span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>django
+<span class="gp">$ </span>git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>upstream<span class="w"> </span>https://github.com/django/django.git
+</pre></div>
+</div>
+</section>
+<section class="c-content-win" id="c-content-0-win">
+<div class="highlight"><pre><span></span><span class="gp">...\&gt;</span> git clone https://github.com/YourGitHubName/django.git
+<span class="gp">...\&gt;</span> <span class="k">cd</span> django
+<span class="gp">...\&gt;</span> git remote add upstream https://github.com/django/django.git
+</pre></div>
+</section>
+</div>
+</li>
+<li><p>Confirm you’re using a <a class="reference internal" href="../../faq/install.html#faq-python-version-support"><span class="std std-ref">compatible version of Python</span></a>, then set up a virtual environment:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="c1"># This needs to be &gt;= 3.12</span>
+$<span class="w"> </span>python<span class="w"> </span>-V
+$<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>~/.virtualenvs/djangodev
+$<span class="w"> </span><span class="nb">source</span><span class="w"> </span>~/.virtualenvs/djangodev/bin/activate
+</pre></div>
+</div>
+<p>If you are not using a Unix-like system, see the <a class="reference internal" href="../../intro/contributing.html#intro-contributing-install-local-copy"><span class="std std-ref">platform-specific
+instructions</span></a>.</p>
+</li>
+<li><p>Install the dependencies to run the tests and build the documentation:</p>
+<div class="console-block" id="console-block-1">
+<input class="c-tab-unix" id="c-tab-1-unix" type="radio" name="console-1" checked>
+<label for="c-tab-1-unix" title="Linux/macOS">&#xf17c/&#xf179</label>
+<input class="c-tab-win" id="c-tab-1-win" type="radio" name="console-1">
+<label for="c-tab-1-win" title="Windows">&#xf17a</label>
+<section class="c-content-unix" id="c-content-1-unix">
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>pip
+<span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w"> </span>-r<span class="w"> </span>tests/requirements/py3.txt<span class="w"> </span>-r<span class="w"> </span>docs/requirements.txt
+</pre></div>
+</div>
+</section>
+<section class="c-content-win" id="c-content-1-win">
+<div class="highlight"><pre><span></span><span class="gp">...\&gt;</span> py -m pip install -U pip
+<span class="gp">...\&gt;</span> py -m pip install -e . -r tests\requirements\py3.txt -r docs\requirements.txt
+</pre></div>
+</section>
+</div>
+</li>
+<li><p>Install pre-commit hooks so that formatting and linting run automatically
+before each commit:</p>
+<div class="console-block" id="console-block-2">
+<input class="c-tab-unix" id="c-tab-2-unix" type="radio" name="console-2" checked>
+<label for="c-tab-2-unix" title="Linux/macOS">&#xf17c/&#xf179</label>
+<input class="c-tab-win" id="c-tab-2-win" type="radio" name="console-2">
+<label for="c-tab-2-win" title="Windows">&#xf17a</label>
+<section class="c-content-unix" id="c-content-2-unix">
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>pre-commit
+<span class="gp">$ </span>pre-commit<span class="w"> </span>install
+</pre></div>
+</div>
+</section>
+<section class="c-content-win" id="c-content-2-win">
+<div class="highlight"><pre><span></span><span class="gp">...\&gt;</span> py -m pip install pre-commit
+<span class="gp">...\&gt;</span> pre-commit install
+</pre></div>
+</section>
+</div>
+<p>See <a class="reference internal" href="writing-code/coding-style.html#coding-style-pre-commit"><span class="std std-ref">Pre-commit checks</span></a> for further details.</p>
+</li>
+<li><p>Run the tests:</p>
+<div class="console-block" id="console-block-3">
+<input class="c-tab-unix" id="c-tab-3-unix" type="radio" name="console-3" checked>
+<label for="c-tab-3-unix" title="Linux/macOS">&#xf17c/&#xf179</label>
+<input class="c-tab-win" id="c-tab-3-win" type="radio" name="console-3">
+<label for="c-tab-3-win" title="Windows">&#xf17a</label>
+<section class="c-content-unix" id="c-content-3-unix">
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./tests/runtests.py
+</pre></div>
+</div>
+</section>
+<section class="c-content-win" id="c-content-3-win">
+<div class="highlight"><pre><span></span><span class="gp">...\&gt;</span> tests\runtests.py
+</pre></div>
+</section>
+</div>
+<p>See <a class="reference internal" href="writing-code/unit-tests.html#running-unit-tests"><span class="std std-ref">Running the unit tests</span></a> for more information. While tests will all
+pass in CI, they may not on every person’s local environment. For example,
+the test suite is only guaranteed to pass on the latest point release of
+each supported Python version. It’s possible you may encounter errors using
+an earlier point release.</p>
+<p>If you have a small number of failures, it may be worth investigating
+whether they are known issues, or using the <a class="reference internal" href="writing-code/unit-tests.html#running-tests-docker-box"><span class="std std-ref">django-docker-box</span></a> project to run the tests. Since this is a
+sprint, it may be more valuable for you to work on the issue at hand rather
+than investigating a weird machine configuration problem. Make a note of the
+failing tests before you start, so you can tell whether a later failure was
+caused by your changes.</p>
+</li>
+<li><p>Build the documentation:</p>
+<div class="console-block" id="console-block-4">
+<input class="c-tab-unix" id="c-tab-4-unix" type="radio" name="console-4" checked>
+<label for="c-tab-4-unix" title="Linux/macOS">&#xf17c/&#xf179</label>
+<input class="c-tab-win" id="c-tab-4-win" type="radio" name="console-4">
+<label for="c-tab-4-win" title="Windows">&#xf17a</label>
+<section class="c-content-unix" id="c-content-4-unix">
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>docs<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>make<span class="w"> </span>html<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>..
+</pre></div>
+</div>
+</section>
+<section class="c-content-win" id="c-content-4-win">
+<div class="highlight"><pre><span></span><span class="gp">...\&gt;</span> <span class="k">cd</span> docs <span class="p">&amp;&amp;</span> make.bat html <span class="p">&amp;&amp;</span> <span class="k">cd</span> ..
+</pre></div>
+</section>
+</div>
+</li>
+</ol>
+</section>
+<section id="s-finding-a-ticket-to-work-on">
+<span id="finding-a-ticket-to-work-on"></span><h2>Finding a ticket to work on<a class="headerlink" href="#finding-a-ticket-to-work-on" title="Link to this heading">¶</a></h2>
+<p>Finding a workable ticket is a challenging task. It’s important to read this
+section before attempting to do so.</p>
+<section id="s-assessing-tickets">
+<span id="assessing-tickets"></span><h3>Assessing tickets<a class="headerlink" href="#assessing-tickets" title="Link to this heading">¶</a></h3>
+<p>When looking over tickets, it’s a good idea to keep your search to <a class="reference external" href="https://code.djangoproject.com/query?stage=Accepted&amp;status=assigned&amp;status=new&amp;time=5+years+ago..today&amp;order=id&amp;desc=1&amp;col=id&amp;col=summary&amp;col=owner&amp;col=type&amp;col=component&amp;col=time&amp;col=changetime">accepted
+tickets created in the last five years</a>. Older tickets are old for a reason:
+they are usually still open because they are hard, contentious, or both.
+You’re welcome to try one, but expect it to require a high degree of
+perseverance.</p>
+<p>Consider using the component filter option in Trac to limit your search to
+areas you have used before. If you’ve used forms in a few Django apps, consider
+filtering down to the forms component. Similarly, if you’ve never worked with
+geospatial projects, it’s probably wise to avoid <code class="docutils literal notranslate"><span class="pre">django.contrib.gis</span></code>. For
+example, here are the <a class="reference external" href="https://code.djangoproject.com/query?component=Documentation&amp;stage=Accepted&amp;status=assigned&amp;status=new&amp;time=5+years+ago..today&amp;order=id&amp;desc=1&amp;col=id&amp;col=summary&amp;col=owner&amp;col=type&amp;col=component&amp;col=time&amp;col=changetime">tickets for the documentation component</a>.</p>
+</section>
+<section id="s-methods-to-find-tickets">
+<span id="methods-to-find-tickets"></span><h3>Methods to find tickets<a class="headerlink" href="#methods-to-find-tickets" title="Link to this heading">¶</a></h3>
+<p>There are two recommended ways to find a ticket:</p>
+<ul class="simple">
+<li><p>Look at the <a class="reference external" href="https://code.djangoproject.com/query?easy=1&amp;stage=Accepted&amp;status=assigned&amp;status=new&amp;time=5+years+ago..today&amp;order=id&amp;desc=1&amp;col=id&amp;col=summary&amp;col=owner&amp;col=type&amp;col=component&amp;col=time&amp;col=changetime">easy pickings</a>.</p></li>
+<li><p>Use the <a class="reference external" href="https://youtube.com/shorts/D6QHet5U82U?si=j5M6sy0ufpeGy_iZ">vulture method</a>.</p></li>
+</ul>
+<p>The vulture method is the process of looking for accepted tickets that haven’t
+been touched in six months or longer. The ideal ticket has a PR linked to it
+that has a code review with explicit requests for changes and the author has
+not responded in at least six months on the PR and on the ticket. Before taking
+one over, leave a comment on both the ticket and the PR letting the author know
+that you are continuing their work.</p>
+<p>You can view the list of <a class="reference external" href="https://code.djangoproject.com/query?stage=Accepted&amp;changetime=5+years+ago..6+months+ago&amp;needs_better_patch=1&amp;status=assigned&amp;status=new&amp;time=5+years+ago..today&amp;order=id&amp;desc=1&amp;col=id&amp;col=summary&amp;col=time&amp;col=changetime&amp;col=needs_better_patch&amp;col=owner&amp;col=type&amp;col=component">possibly vulture-able tickets here</a>. The filters
+that are applied are:</p>
+<ul class="simple">
+<li><p>Triage stage = Accepted</p></li>
+<li><p>Patch needs improvement = Yes</p></li>
+<li><p>Created = between <code class="docutils literal notranslate"><span class="pre">5</span> <span class="pre">years</span> <span class="pre">ago</span></code> and <code class="docutils literal notranslate"><span class="pre">today</span></code></p></li>
+<li><p>Modified = between <code class="docutils literal notranslate"><span class="pre">5</span> <span class="pre">years</span> <span class="pre">ago</span></code> and <code class="docutils literal notranslate"><span class="pre">6</span> <span class="pre">months</span> <span class="pre">ago</span></code></p></li>
+</ul>
+</section>
+<section id="s-claiming-a-ticket">
+<span id="claiming-a-ticket"></span><h3>Claiming a ticket<a class="headerlink" href="#claiming-a-ticket" title="Link to this heading">¶</a></h3>
+<p>When you find a ticket, make yourself the owner by clicking the “Modify Ticket”
+button near the bottom of the page, selecting the “assign to” radio button in
+the “Action” section, and clicking “Submit changes”. Your username will be
+filled in the text box by default. See <a class="reference internal" href="writing-code/submitting-patches.html#claiming-tickets"><span class="std std-ref">“Claiming” tickets</span></a> for the full
+documentation.</p>
+</section>
+</section>
+<section id="s-creating-a-branch-for-the-ticket">
+<span id="creating-a-branch-for-the-ticket"></span><h2>Creating a branch for the ticket<a class="headerlink" href="#creating-a-branch-for-the-ticket" title="Link to this heading">¶</a></h2>
+<p>How you create your branch depends on whether the ticket already has work
+attached to it.</p>
+<section id="s-starting-fresh">
+<span id="starting-fresh"></span><h3>Starting fresh<a class="headerlink" href="#starting-fresh" title="Link to this heading">¶</a></h3>
+<p>With the ticket claimed, create a branch for your work, replacing
+<code class="docutils literal notranslate"><span class="pre">TicketNumber</span></code> with the actual Trac ticket number:</p>
+<div class="console-block" id="console-block-5">
+<input class="c-tab-unix" id="c-tab-5-unix" type="radio" name="console-5" checked>
+<label for="c-tab-5-unix" title="Linux/macOS">&#xf17c/&#xf179</label>
+<input class="c-tab-win" id="c-tab-5-win" type="radio" name="console-5">
+<label for="c-tab-5-win" title="Windows">&#xf17a</label>
+<section class="c-content-unix" id="c-content-5-unix">
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git<span class="w"> </span>fetch<span class="w"> </span>upstream
+<span class="gp">$ </span>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>ticket_TicketNumber<span class="w"> </span>upstream/main
+</pre></div>
+</div>
+</section>
+<section class="c-content-win" id="c-content-5-win">
+<div class="highlight"><pre><span></span><span class="gp">...\&gt;</span> git fetch upstream
+<span class="gp">...\&gt;</span> git checkout -b ticket_TicketNumber upstream/main
+</pre></div>
+</section>
+</div>
+<p>When your work is ready, push the branch to your fork and open a pull request.
+See <a class="reference internal" href="writing-code/submitting-patches.html"><span class="doc">Submitting contributions</span></a> for the full
+process.</p>
+</section>
+<section id="s-continuing-someone-else-s-work">
+<span id="continuing-someone-else-s-work"></span><h3>Continuing someone else’s work<a class="headerlink" href="#continuing-someone-else-s-work" title="Link to this heading">¶</a></h3>
+<p>If you’re continuing the work from someone else’s pull request on GitHub,
+things can be tricky. You need to pull their branch, but then push it to your
+GitHub repository fork.</p>
+<p>Run the following, replacing <code class="docutils literal notranslate"><span class="pre">PRNumber</span></code> and <code class="docutils literal notranslate"><span class="pre">TicketNumber</span></code> with the actual
+pull request and Trac ticket numbers:</p>
+<div class="console-block" id="console-block-6">
+<input class="c-tab-unix" id="c-tab-6-unix" type="radio" name="console-6" checked>
+<label for="c-tab-6-unix" title="Linux/macOS">&#xf17c/&#xf179</label>
+<input class="c-tab-win" id="c-tab-6-win" type="radio" name="console-6">
+<label for="c-tab-6-win" title="Windows">&#xf17a</label>
+<section class="c-content-unix" id="c-content-6-unix">
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git<span class="w"> </span>fetch<span class="w"> </span>upstream<span class="w"> </span>pull/PRNumber/head:ticket_TicketNumber
+<span class="gp">$ </span>git<span class="w"> </span>checkout<span class="w"> </span>ticket_TicketNumber
+<span class="gp">$ </span>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>ticket_TicketNumber
+</pre></div>
+</div>
+</section>
+<section class="c-content-win" id="c-content-6-win">
+<div class="highlight"><pre><span></span><span class="gp">...\&gt;</span> git fetch upstream pull/PRNumber/head:ticket_TicketNumber
+<span class="gp">...\&gt;</span> git checkout ticket_TicketNumber
+<span class="gp">...\&gt;</span> git push origin ticket_TicketNumber
+</pre></div>
+</section>
+</div>
+<p>For example, to continue PR 8000 for ticket 123, run:</p>
+<div class="console-block" id="console-block-7">
+<input class="c-tab-unix" id="c-tab-7-unix" type="radio" name="console-7" checked>
+<label for="c-tab-7-unix" title="Linux/macOS">&#xf17c/&#xf179</label>
+<input class="c-tab-win" id="c-tab-7-win" type="radio" name="console-7">
+<label for="c-tab-7-win" title="Windows">&#xf17a</label>
+<section class="c-content-unix" id="c-content-7-unix">
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git<span class="w"> </span>fetch<span class="w"> </span>upstream<span class="w"> </span>pull/8000/head:ticket_123
+<span class="gp">$ </span>git<span class="w"> </span>checkout<span class="w"> </span>ticket_123
+<span class="gp">$ </span>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>ticket_123
+</pre></div>
+</div>
+</section>
+<section class="c-content-win" id="c-content-7-win">
+<div class="highlight"><pre><span></span><span class="gp">...\&gt;</span> git fetch upstream pull/8000/head:ticket_123
+<span class="gp">...\&gt;</span> git checkout ticket_123
+<span class="gp">...\&gt;</span> git push origin ticket_123
+</pre></div>
+</section>
+</div>
+<p>When preparing your commit, please review our <a class="reference internal" href="committing-code.html#committing-guidelines"><span class="std std-ref">committing guidelines</span></a>, specifically how to credit co-authors.</p>
+</section>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Sprint quickstart guide</a><ul>
+<li><a class="reference internal" href="#set-up">Set up</a></li>
+<li><a class="reference internal" href="#finding-a-ticket-to-work-on">Finding a ticket to work on</a><ul>
+<li><a class="reference internal" href="#assessing-tickets">Assessing tickets</a></li>
+<li><a class="reference internal" href="#methods-to-find-tickets">Methods to find tickets</a></li>
+<li><a class="reference internal" href="#claiming-a-ticket">Claiming a ticket</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#creating-a-branch-for-the-ticket">Creating a branch for the ticket</a><ul>
+<li><a class="reference internal" href="#starting-fresh">Starting fresh</a></li>
+<li><a class="reference internal" href="#continuing-someone-else-s-work">Continuing someone else’s work</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="new-contributors.html"
+                          title="previous chapter">Advice for new contributors</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="writing-code/index.html"
+                          title="next chapter">Contributing code</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/internals/contributing/sprint-quickstart.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="new-contributors.html" title="Advice for new contributors">previous</a>
+     |
+    <a href="../index.html" title="Django internals" accesskey="U">up</a>
+   |
+    <a href="writing-code/index.html" title="Contributing code">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

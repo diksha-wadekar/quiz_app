@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Asynchronous support &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../_static/default.css?v=bf4d74af" />
+    <script src="../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Django’s Tasks framework" href="tasks.html" />
+    <link rel="prev" title="System check framework" href="checks.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Module index" href="../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="checks.html" title="System check framework">previous</a>
+     |
+    <a href="index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="tasks.html" title="Django’s Tasks framework">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="topics-async">
+            
+  <section id="s-asynchronous-support">
+<span id="asynchronous-support"></span><h1>Asynchronous support<a class="headerlink" href="#asynchronous-support" title="Link to this heading">¶</a></h1>
+<p>Django has support for writing asynchronous (“async”) views, along with an
+entirely async-enabled request stack if you are running under <a class="reference internal" href="../howto/deployment/asgi/index.html"><span class="doc">ASGI</span></a>. Async views will still work under WSGI, but
+with a small per-request adaptation cost (see <a class="reference internal" href="#async-performance"><span class="std std-ref">Performance</span></a>), and
+without the ability to have efficient long-running requests.</p>
+<p>Many parts of Django provide asynchronous APIs, including <a class="reference internal" href="db/queries.html#async-queries"><span class="std std-ref">the ORM</span></a>, the cache framework, authentication, sessions, and signals.
+For other code, the <a class="reference internal" href="#asgiref.sync.sync_to_async" title="asgiref.sync.sync_to_async"><code class="xref py py-func docutils literal notranslate"><span class="pre">sync_to_async()</span></code></a> adapter is a low-cost bridge (see
+<a class="reference internal" href="#async-performance"><span class="std std-ref">Performance</span></a>). A wide range of async-native Python libraries can
+also be integrated.</p>
+<section id="s-async-views">
+<span id="async-views"></span><h2>Async views<a class="headerlink" href="#async-views" title="Link to this heading">¶</a></h2>
+<p>Any view can be declared async by making the callable part of it return a
+coroutine - commonly, this is done using <code class="docutils literal notranslate"><span class="pre">async</span> <span class="pre">def</span></code>. For a function-based
+view, this means declaring the whole view using <code class="docutils literal notranslate"><span class="pre">async</span> <span class="pre">def</span></code>. For a
+class-based view, this means declaring the HTTP method handlers, such as
+<code class="docutils literal notranslate"><span class="pre">get()</span></code> and <code class="docutils literal notranslate"><span class="pre">post()</span></code> as <code class="docutils literal notranslate"><span class="pre">async</span> <span class="pre">def</span></code> (not its <code class="docutils literal notranslate"><span class="pre">__init__()</span></code>, or
+<code class="docutils literal notranslate"><span class="pre">as_view()</span></code>).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Django uses <code class="docutils literal notranslate"><span class="pre">inspect.iscoroutinefunction</span></code> to test if your view is
+asynchronous or not. If you implement your own method of returning a
+coroutine, ensure you use <code class="docutils literal notranslate"><span class="pre">inspect.markcoroutinefunction</span></code> so this
+function returns <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</div>
+<p>Under a WSGI server, async views will run in their own, one-off event loop.
+This means you can use async features, like concurrent async HTTP requests,
+without any issues, but you will not get the benefits of an async stack.</p>
+<p>The main benefits are the ability to service hundreds of connections without
+using Python threads. This allows you to use slow streaming, long-polling, and
+other exciting response types.</p>
+<p>If you want to use these, you will need to deploy Django using
+<a class="reference internal" href="../howto/deployment/asgi/index.html"><span class="doc">ASGI</span></a> instead.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A fully asynchronous request stack requires async middleware end-to-end.
+Where a piece of synchronous middleware sits between an ASGI server and an
+async view, Django adapts it by running it in its own thread; see
+<a class="reference internal" href="#async-performance"><span class="std std-ref">Performance</span></a> for the cost trade-off.</p>
+<p>Django’s bundled middleware supports both <a class="reference internal" href="http/middleware.html#async-middleware"><span class="std std-ref">sync and async</span></a>. Third-party middleware may not. To see which
+middleware Django adapts, turn on debug logging for the <code class="docutils literal notranslate"><span class="pre">django.request</span></code>
+logger and look for log messages about <em>“Asynchronous handler adapted for
+middleware …”</em>.</p>
+</div>
+<p>In both ASGI and WSGI mode, you can still safely use asynchronous support to
+run code concurrently rather than serially. This is especially handy when
+dealing with external APIs or data stores.</p>
+<p>If you want to call a part of Django that is still synchronous, you will need
+to wrap it in a <a class="reference internal" href="#asgiref.sync.sync_to_async" title="asgiref.sync.sync_to_async"><code class="xref py py-func docutils literal notranslate"><span class="pre">sync_to_async()</span></code></a> call. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">asgiref.sync</span><span class="w"> </span><span class="kn">import</span> <span class="n">sync_to_async</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">sync_to_async</span><span class="p">(</span><span class="n">sync_function</span><span class="p">,</span> <span class="n">thread_sensitive</span><span class="o">=</span><span class="kc">True</span><span class="p">)(</span><span class="n">pk</span><span class="o">=</span><span class="mi">123</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you accidentally try to call a part of Django that is synchronous-only
+from an async view, you will trigger Django’s
+<a class="reference internal" href="#async-safety"><span class="std std-ref">asynchronous safety protection</span></a> to protect your data from
+corruption.</p>
+<section id="s-decorators">
+<span id="decorators"></span><h3>Decorators<a class="headerlink" href="#decorators" title="Link to this heading">¶</a></h3>
+<p>The following decorators can be used with both synchronous and asynchronous
+view functions:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="http/decorators.html#django.views.decorators.cache.cache_control" title="django.views.decorators.cache.cache_control"><code class="xref py py-func docutils literal notranslate"><span class="pre">cache_control()</span></code></a></p></li>
+<li><p><a class="reference internal" href="http/decorators.html#django.views.decorators.cache.never_cache" title="django.views.decorators.cache.never_cache"><code class="xref py py-func docutils literal notranslate"><span class="pre">never_cache()</span></code></a></p></li>
+<li><p><a class="reference internal" href="http/decorators.html#django.views.decorators.common.no_append_slash" title="django.views.decorators.common.no_append_slash"><code class="xref py py-func docutils literal notranslate"><span class="pre">no_append_slash()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../ref/csp.html#django.views.decorators.csp.csp_override" title="django.views.decorators.csp.csp_override"><code class="xref py py-func docutils literal notranslate"><span class="pre">csp_override()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../ref/csp.html#django.views.decorators.csp.csp_report_only_override" title="django.views.decorators.csp.csp_report_only_override"><code class="xref py py-func docutils literal notranslate"><span class="pre">csp_report_only_override()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../ref/csrf.html#django.views.decorators.csrf.csrf_exempt" title="django.views.decorators.csrf.csrf_exempt"><code class="xref py py-func docutils literal notranslate"><span class="pre">csrf_exempt()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../ref/csrf.html#django.views.decorators.csrf.csrf_protect" title="django.views.decorators.csrf.csrf_protect"><code class="xref py py-func docutils literal notranslate"><span class="pre">csrf_protect()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../ref/csrf.html#django.views.decorators.csrf.ensure_csrf_cookie" title="django.views.decorators.csrf.ensure_csrf_cookie"><code class="xref py py-func docutils literal notranslate"><span class="pre">ensure_csrf_cookie()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../ref/csrf.html#django.views.decorators.csrf.requires_csrf_token" title="django.views.decorators.csrf.requires_csrf_token"><code class="xref py py-func docutils literal notranslate"><span class="pre">requires_csrf_token()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../howto/error-reporting.html#django.views.decorators.debug.sensitive_variables" title="django.views.decorators.debug.sensitive_variables"><code class="xref py py-func docutils literal notranslate"><span class="pre">sensitive_variables()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../howto/error-reporting.html#django.views.decorators.debug.sensitive_post_parameters" title="django.views.decorators.debug.sensitive_post_parameters"><code class="xref py py-func docutils literal notranslate"><span class="pre">sensitive_post_parameters()</span></code></a></p></li>
+<li><p><a class="reference internal" href="http/decorators.html#django.views.decorators.gzip.gzip_page" title="django.views.decorators.gzip.gzip_page"><code class="xref py py-func docutils literal notranslate"><span class="pre">gzip_page()</span></code></a></p></li>
+<li><p><a class="reference internal" href="http/decorators.html#django.views.decorators.http.condition" title="django.views.decorators.http.condition"><code class="xref py py-func docutils literal notranslate"><span class="pre">condition()</span></code></a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">conditional_page()</span></code></p></li>
+<li><p><a class="reference internal" href="http/decorators.html#django.views.decorators.http.etag" title="django.views.decorators.http.etag"><code class="xref py py-func docutils literal notranslate"><span class="pre">etag()</span></code></a></p></li>
+<li><p><a class="reference internal" href="http/decorators.html#django.views.decorators.http.last_modified" title="django.views.decorators.http.last_modified"><code class="xref py py-func docutils literal notranslate"><span class="pre">last_modified()</span></code></a></p></li>
+<li><p><a class="reference internal" href="http/decorators.html#django.views.decorators.http.require_http_methods" title="django.views.decorators.http.require_http_methods"><code class="xref py py-func docutils literal notranslate"><span class="pre">require_http_methods()</span></code></a></p></li>
+<li><p><a class="reference internal" href="http/decorators.html#django.views.decorators.http.require_GET" title="django.views.decorators.http.require_GET"><code class="xref py py-func docutils literal notranslate"><span class="pre">require_GET()</span></code></a></p></li>
+<li><p><a class="reference internal" href="http/decorators.html#django.views.decorators.http.require_POST" title="django.views.decorators.http.require_POST"><code class="xref py py-func docutils literal notranslate"><span class="pre">require_POST()</span></code></a></p></li>
+<li><p><a class="reference internal" href="http/decorators.html#django.views.decorators.http.require_safe" title="django.views.decorators.http.require_safe"><code class="xref py py-func docutils literal notranslate"><span class="pre">require_safe()</span></code></a></p></li>
+<li><p><a class="reference internal" href="http/decorators.html#django.views.decorators.vary.vary_on_cookie" title="django.views.decorators.vary.vary_on_cookie"><code class="xref py py-func docutils literal notranslate"><span class="pre">vary_on_cookie()</span></code></a></p></li>
+<li><p><a class="reference internal" href="http/decorators.html#django.views.decorators.vary.vary_on_headers" title="django.views.decorators.vary.vary_on_headers"><code class="xref py py-func docutils literal notranslate"><span class="pre">vary_on_headers()</span></code></a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xframe_options_deny()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xframe_options_sameorigin()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xframe_options_exempt()</span></code></p></li>
+</ul>
+<p>For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.views.decorators.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">never_cache</span>
+
+
+<span class="nd">@never_cache</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">my_sync_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span> <span class="o">...</span>
+
+
+<span class="nd">@never_cache</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">my_async_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="../ref/utils.html#django.utils.decorators.method_decorator" title="django.utils.decorators.method_decorator"><code class="xref py py-func docutils literal notranslate"><span class="pre">method_decorator()</span></code></a> can be used with asynchronous
+methods, including <code class="docutils literal notranslate"><span class="pre">async</span> <span class="pre">def</span></code> view handlers. Note, though, that if
+decorating <a class="reference internal" href="../ref/class-based-views/base.html#django.views.generic.base.View.dispatch" title="django.views.generic.base.View.dispatch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">dispatch()</span></code></a> on a <code class="docutils literal notranslate"><span class="pre">View</span></code> with
+asynchronous handlers, you will need to override <code class="docutils literal notranslate"><span class="pre">dispatch</span></code> to make it
+<code class="docutils literal notranslate"><span class="pre">async</span> <span class="pre">def</span></code> as well:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyClass</span><span class="p">(</span><span class="n">View</span><span class="p">):</span>
+    <span class="nd">@method_decorator</span><span class="p">(</span><span class="n">never_cache</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span> <span class="o">...</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>Here, because we are decorating <code class="docutils literal notranslate"><span class="pre">dispatch</span></code>, rather than the individual
+handler methods, we need to make <code class="docutils literal notranslate"><span class="pre">dispatch</span></code> asynchronous so that
+<code class="docutils literal notranslate"><span class="pre">method_decorator</span></code> can correctly mark the resulting method as a coroutine
+function.</p>
+</section>
+<section id="s-queries-the-orm">
+<span id="queries-the-orm"></span><h3>Queries &amp; the ORM<a class="headerlink" href="#queries-the-orm" title="Link to this heading">¶</a></h3>
+<p>With some exceptions, Django can run ORM queries asynchronously:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">for</span> <span class="n">author</span> <span class="ow">in</span> <span class="n">Author</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">name__startswith</span><span class="o">=</span><span class="s2">&quot;A&quot;</span><span class="p">):</span>
+    <span class="n">book</span> <span class="o">=</span> <span class="k">await</span> <span class="n">author</span><span class="o">.</span><span class="n">books</span><span class="o">.</span><span class="n">afirst</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Detailed notes can be found in <a class="reference internal" href="db/queries.html#async-queries"><span class="std std-ref">Asynchronous queries</span></a>, but in short:</p>
+<ul class="simple">
+<li><p>All <code class="docutils literal notranslate"><span class="pre">QuerySet</span></code> methods that cause an SQL query to occur have an
+<code class="docutils literal notranslate"><span class="pre">a</span></code>-prefixed asynchronous variant.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">async</span> <span class="pre">for</span></code> is supported on all QuerySets (including the output of
+<code class="docutils literal notranslate"><span class="pre">values()</span></code> and <code class="docutils literal notranslate"><span class="pre">values_list()</span></code>.)</p></li>
+</ul>
+<p>Asynchronous model methods that use the database are also supported:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">make_book</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">book</span> <span class="o">=</span> <span class="n">Book</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">book</span><span class="o">.</span><span class="n">asave</span><span class="p">(</span><span class="n">using</span><span class="o">=</span><span class="s2">&quot;secondary&quot;</span><span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">make_book_with_tags</span><span class="p">(</span><span class="n">tags</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">book</span> <span class="o">=</span> <span class="k">await</span> <span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">acreate</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">book</span><span class="o">.</span><span class="n">tags</span><span class="o">.</span><span class="n">aset</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Transactions do not yet work in async mode. If you have a piece of code that
+needs transactions behavior, we recommend you write that piece as a single
+synchronous function and call it using <a class="reference internal" href="#asgiref.sync.sync_to_async" title="asgiref.sync.sync_to_async"><code class="xref py py-func docutils literal notranslate"><span class="pre">sync_to_async()</span></code></a>.</p>
+<p><a class="reference internal" href="../ref/databases.html#persistent-database-connections"><span class="std std-ref">Persistent database connections</span></a>, set
+via the <a class="reference internal" href="../ref/settings.html#std-setting-CONN_MAX_AGE"><code class="xref std std-setting docutils literal notranslate"><span class="pre">CONN_MAX_AGE</span></code></a> setting, should also be disabled in async mode.
+Instead, use your database backend’s built-in connection pooling if available,
+or investigate a third-party connection pooling option if required. As in
+synchronous Django, concurrent requests in a single process share that pool, so
+size it to the target in-flight query concurrency.</p>
+</section>
+<section id="s-performance">
+<span id="s-async-performance"></span><span id="performance"></span><span id="async-performance"></span><h3>Performance<a class="headerlink" href="#performance" title="Link to this heading">¶</a></h3>
+<p>When running in a mode that does not match the view (e.g. an async view under
+WSGI, or a traditional sync view under ASGI), Django must emulate the other
+call style to allow your code to run. The per-call cost of this adaptation is
+small: tens of microseconds in the in-request ASGI path, where the running
+event loop is reused, and a few hundred microseconds in the cold-start path
+used by management commands, background tasks, and scripts. Against typical
+request times measured in milliseconds, this is rarely visible in itself, but
+can become so under GIL contention as the number of active threads grows.</p>
+<p>If you find yourself wrapping individual rows or operations in a tight loop,
+restructure your code so the loop runs inside a single <a class="reference internal" href="#asgiref.sync.sync_to_async" title="asgiref.sync.sync_to_async"><code class="xref py py-func docutils literal notranslate"><span class="pre">sync_to_async()</span></code></a>
+(or <a class="reference internal" href="#asgiref.sync.async_to_sync" title="asgiref.sync.async_to_sync"><code class="xref py py-func docutils literal notranslate"><span class="pre">async_to_sync()</span></code></a>) crossing. The per-call cost of the context switch is
+then spread across the whole loop and effectively disappears.</p>
+<p>The same per-call adaptation cost applies to middleware. Django will attempt to
+minimize the number of context-switches between sync and async. If you have an
+ASGI server, but all your middleware and views are synchronous, it will switch
+just once, before it enters the middleware stack.</p>
+<p>However, if you put synchronous middleware between an ASGI server and an
+asynchronous view, it will have to switch into sync mode for the middleware and
+then back to async mode for the view. Django will also hold the sync thread
+open for middleware exception propagation. For request/response views that hit
+the ORM and return, this is not usually a meaningful penalty. It matters most
+when you are using ASGI for high in-process concurrency over non-ORM I/O (for
+example upstream HTTP fan-out, server-sent events, or other long-lived
+requests), where the extra thread per request caps that concurrency.</p>
+<p>You should do your own performance testing to see what effect ASGI versus WSGI
+has on your code. In some cases, there may be a performance increase even for
+a purely synchronous codebase under ASGI because the request-handling code is
+still all running asynchronously. In general you will only want to enable ASGI
+mode if you have asynchronous code in your project.</p>
+</section>
+<section id="s-handling-disconnects">
+<span id="s-async-handling-disconnect"></span><span id="handling-disconnects"></span><span id="async-handling-disconnect"></span><h3>Handling disconnects<a class="headerlink" href="#handling-disconnects" title="Link to this heading">¶</a></h3>
+<p>For long-lived requests, a client may disconnect before the view returns a
+response. In this case, an <code class="docutils literal notranslate"><span class="pre">asyncio.CancelledError</span></code> will be raised in the
+view. You can catch this error and handle it if you need to perform any
+cleanup:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Do some work</span>
+        <span class="o">...</span>
+    <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">:</span>
+        <span class="c1"># Handle disconnect</span>
+        <span class="k">raise</span>
+</pre></div>
+</div>
+<p>You can also <a class="reference internal" href="../ref/request-response.html#request-response-streaming-disconnect"><span class="std std-ref">handle client disconnects in streaming responses</span></a>.</p>
+</section>
+</section>
+<section id="s-async-safety">
+<span id="s-id1"></span><span id="async-safety"></span><span id="id1"></span><h2>Async safety<a class="headerlink" href="#async-safety" title="Link to this heading">¶</a></h2>
+<dl class="std envvar">
+<dt class="sig sig-object std" id="envvar-DJANGO_ALLOW_ASYNC_UNSAFE">
+<span class="sig-name descname"><span class="pre">DJANGO_ALLOW_ASYNC_UNSAFE</span></span><a class="headerlink" href="#envvar-DJANGO_ALLOW_ASYNC_UNSAFE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Certain key parts of Django are not able to operate safely in an async
+environment, as they have global state that is not coroutine-aware. These parts
+of Django are classified as “async-unsafe”, and are protected from execution in
+an async environment. The synchronous API of the ORM is the main example, but
+there are other parts that are also protected in this way.</p>
+<p>If you try to run any of these parts from a thread where there is a <em>running
+event loop</em>, you will get a
+<a class="reference internal" href="../ref/exceptions.html#django.core.exceptions.SynchronousOnlyOperation" title="django.core.exceptions.SynchronousOnlyOperation"><code class="xref py py-exc docutils literal notranslate"><span class="pre">SynchronousOnlyOperation</span></code></a> error. Note that you
+don’t have to be inside an async function directly to have this error occur. If
+you have called a sync function directly from an async function,
+without using <a class="reference internal" href="#asgiref.sync.sync_to_async" title="asgiref.sync.sync_to_async"><code class="xref py py-func docutils literal notranslate"><span class="pre">sync_to_async()</span></code></a> or similar, then it can also occur. This is
+because your code is still running in a thread with an active event loop, even
+though it may not be declared as async code.</p>
+<p>If you encounter this error, you should fix your code to not call the offending
+code from an async context. Instead, write your code that talks to async-unsafe
+functions in its own, sync function, and call that using
+<a class="reference internal" href="#asgiref.sync.sync_to_async" title="asgiref.sync.sync_to_async"><code class="xref py py-func docutils literal notranslate"><span class="pre">asgiref.sync.sync_to_async()</span></code></a> (or any other way of running sync code in
+its own thread).</p>
+<p>The async context can be imposed upon you by the environment in which you are
+running your Django code. For example, <a class="reference external" href="https://jupyter.org/">Jupyter</a> notebooks and <a class="reference external" href="https://ipython.org">IPython</a>
+interactive shells both transparently provide an active event loop so that it
+is easier to interact with asynchronous APIs.</p>
+<p>If you’re using an IPython shell, you can disable this event loop by running:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>%autoawait<span class="w"> </span>off
+</pre></div>
+</div>
+<p>as a command at the IPython prompt. This will allow you to run synchronous code
+without generating <a class="reference internal" href="../ref/exceptions.html#django.core.exceptions.SynchronousOnlyOperation" title="django.core.exceptions.SynchronousOnlyOperation"><code class="xref py py-exc docutils literal notranslate"><span class="pre">SynchronousOnlyOperation</span></code></a>
+errors; however, you also won’t be able to <code class="docutils literal notranslate"><span class="pre">await</span></code> asynchronous APIs. To turn
+the event loop back on, run:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>%autoawait<span class="w"> </span>on
+</pre></div>
+</div>
+<p>If you’re in an environment other than IPython (or you can’t turn off
+<code class="docutils literal notranslate"><span class="pre">autoawait</span></code> in IPython for some reason), you are <em>certain</em> there is no chance
+of your code being run concurrently, and you <em>absolutely</em> need to run your sync
+code from an async context, then you can disable the warning by setting the
+<span class="target" id="index-0"></span><a class="reference internal" href="#envvar-DJANGO_ALLOW_ASYNC_UNSAFE"><code class="xref std std-envvar docutils literal notranslate"><span class="pre">DJANGO_ALLOW_ASYNC_UNSAFE</span></code></a> environment variable to any value.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If you enable this option and there is concurrent access to the
+async-unsafe parts of Django, you may suffer data loss or corruption. Be
+very careful and do not use this in production environments.</p>
+</div>
+<p>If you need to do this from within Python, do that with <code class="docutils literal notranslate"><span class="pre">os.environ</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;DJANGO_ALLOW_ASYNC_UNSAFE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;true&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="s-async-adapter-functions">
+<span id="async-adapter-functions"></span><h2>Async adapter functions<a class="headerlink" href="#async-adapter-functions" title="Link to this heading">¶</a></h2>
+<p>It is necessary to adapt the calling style when calling sync code from an async
+context, or vice-versa. For this there are two adapter functions, from the
+<code class="docutils literal notranslate"><span class="pre">asgiref.sync</span></code> module: <a class="reference internal" href="#asgiref.sync.async_to_sync" title="asgiref.sync.async_to_sync"><code class="xref py py-func docutils literal notranslate"><span class="pre">async_to_sync()</span></code></a> and <a class="reference internal" href="#asgiref.sync.sync_to_async" title="asgiref.sync.sync_to_async"><code class="xref py py-func docutils literal notranslate"><span class="pre">sync_to_async()</span></code></a>. They
+are used to transition between the calling styles while preserving
+compatibility.</p>
+<p>These adapter functions are widely used in Django. The <a class="extlink-pypi reference external" href="https://pypi.org/project/asgiref/">asgiref</a> package
+itself is part of the Django project, and it is automatically installed as a
+dependency when you install Django with <code class="docutils literal notranslate"><span class="pre">pip</span></code>.</p>
+<section id="s-async-to-sync">
+<span id="async-to-sync"></span><h3><code class="docutils literal notranslate"><span class="pre">async_to_sync()</span></code><a class="headerlink" href="#async-to-sync" title="Link to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="asgiref.sync.async_to_sync">
+<span class="sig-name descname"><span class="pre">async_to_sync</span></span>(<em class="sig-param"><span class="n"><span class="pre">async_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_new_loop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>)<a class="headerlink" href="#asgiref.sync.async_to_sync" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Takes an async function and returns a sync function that wraps it. Can be used
+as either a direct wrapper or a decorator:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">asgiref.sync</span><span class="w"> </span><span class="kn">import</span> <span class="n">async_to_sync</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_data</span><span class="p">():</span> <span class="o">...</span>
+
+
+<span class="n">sync_get_data</span> <span class="o">=</span> <span class="n">async_to_sync</span><span class="p">(</span><span class="n">get_data</span><span class="p">)</span>
+
+
+<span class="nd">@async_to_sync</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_other_data</span><span class="p">():</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>The async function is run in the event loop for the current thread, if one is
+present. If there is no current event loop, a new event loop is spun up
+specifically for the single async invocation and shut down again once it
+completes. In either situation, the async function will execute on a different
+thread to the calling code.</p>
+<p>Threadlocals and contextvars values are preserved across the boundary in both
+directions.</p>
+<p><a class="reference internal" href="#asgiref.sync.async_to_sync" title="asgiref.sync.async_to_sync"><code class="xref py py-func docutils literal notranslate"><span class="pre">async_to_sync()</span></code></a> is essentially a more powerful version of the
+<a class="reference external" href="https://docs.python.org/3/library/asyncio-runner.html#asyncio.run" title="(in Python v3.14)"><code class="xref py py-func docutils literal notranslate"><span class="pre">asyncio.run()</span></code></a> function in Python’s standard library. As well as ensuring
+threadlocals work, it also enables the <code class="docutils literal notranslate"><span class="pre">thread_sensitive</span></code> mode of
+<a class="reference internal" href="#asgiref.sync.sync_to_async" title="asgiref.sync.sync_to_async"><code class="xref py py-func docutils literal notranslate"><span class="pre">sync_to_async()</span></code></a> when that wrapper is used below it. In the cold path
+(no running event loop) it pays the cost of starting a fresh event loop, like
+<a class="reference external" href="https://docs.python.org/3/library/asyncio-runner.html#asyncio.run" title="(in Python v3.14)"><code class="xref py py-func docutils literal notranslate"><span class="pre">asyncio.run()</span></code></a>; when an event loop is already running (the in-request ASGI
+case), the running loop is reused and the cost drops accordingly.</p>
+</section>
+<section id="s-sync-to-async">
+<span id="sync-to-async"></span><h3><code class="docutils literal notranslate"><span class="pre">sync_to_async()</span></code><a class="headerlink" href="#sync-to-async" title="Link to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="asgiref.sync.sync_to_async">
+<span class="sig-name descname"><span class="pre">sync_to_async</span></span>(<em class="sig-param"><span class="n"><span class="pre">sync_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thread_sensitive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>)<a class="headerlink" href="#asgiref.sync.sync_to_async" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Takes a sync function and returns an async function that wraps it. Can be used
+as either a direct wrapper or a decorator:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">asgiref.sync</span><span class="w"> </span><span class="kn">import</span> <span class="n">sync_to_async</span>
+
+<span class="n">async_function</span> <span class="o">=</span> <span class="n">sync_to_async</span><span class="p">(</span><span class="n">sync_function</span><span class="p">,</span> <span class="n">thread_sensitive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">async_function</span> <span class="o">=</span> <span class="n">sync_to_async</span><span class="p">(</span><span class="n">sensitive_sync_function</span><span class="p">,</span> <span class="n">thread_sensitive</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="nd">@sync_to_async</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sync_function</span><span class="p">():</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>Threadlocals and contextvars values are preserved across the boundary in both
+directions.</p>
+<p>Sync functions tend to be written assuming they all run in the main
+thread, so <a class="reference internal" href="#asgiref.sync.sync_to_async" title="asgiref.sync.sync_to_async"><code class="xref py py-func docutils literal notranslate"><span class="pre">sync_to_async()</span></code></a> has two threading modes:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">thread_sensitive=True</span></code> (the default): the sync function will run in the
+same thread as all other <code class="docutils literal notranslate"><span class="pre">thread_sensitive</span></code> functions. This will be the
+main thread, if the main thread is synchronous and you are using the
+<a class="reference internal" href="#asgiref.sync.async_to_sync" title="asgiref.sync.async_to_sync"><code class="xref py py-func docutils literal notranslate"><span class="pre">async_to_sync()</span></code></a> wrapper.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">thread_sensitive=False</span></code>: the sync function will run in a brand new thread
+which is then closed once the invocation completes.</p></li>
+</ul>
+<p>Thread-sensitive mode is quite special, and does a lot of work to run all
+functions in the same thread. Note, though, that it <em>relies on usage of</em>
+<a class="reference internal" href="#asgiref.sync.async_to_sync" title="asgiref.sync.async_to_sync"><code class="xref py py-func docutils literal notranslate"><span class="pre">async_to_sync()</span></code></a> <em>above it in the stack</em> to correctly run things on the
+main thread. If you use <code class="docutils literal notranslate"><span class="pre">asyncio.run()</span></code> or similar, it will fall back to
+running thread-sensitive functions in a single, shared thread, but this will
+not be the main thread.</p>
+<p>The reason this is needed in Django is that many libraries, specifically
+database adapters, require that they are accessed in the same thread that they
+were created in. Also a lot of existing Django code assumes it all runs in the
+same thread, e.g. middleware adding things to a request for later use in views.</p>
+<p>Rather than introduce potential compatibility issues with this code, we instead
+opted to add this mode so that all existing Django sync code runs in the same
+thread and thus is fully compatible with async mode. Note that sync code will
+always be in a <em>different</em> thread to any async code that is calling it, so you
+should avoid passing raw database handles or other thread-sensitive references
+around.</p>
+<p>Within a single request, multiple <code class="docutils literal notranslate"><span class="pre">thread_sensitive</span></code> calls serialize on that
+request’s worker thread, but each request gets its own per-context worker, so
+concurrent requests do <em>not</em> serialize against each other. This mirrors
+Django’s connection-per-thread model, and the same constraint applies in other
+async database libraries, where concurrent queries on a single connection
+serialize on a lock. To support more concurrent requests, increase the
+connection pool size accordingly rather than disabling <code class="docutils literal notranslate"><span class="pre">thread_sensitive</span></code>.</p>
+<p>In practice this restriction means that you should not pass features of the
+database <code class="docutils literal notranslate"><span class="pre">connection</span></code> object when calling <code class="docutils literal notranslate"><span class="pre">sync_to_async()</span></code>. Doing so will
+trigger the thread safety checks:</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="go"># DJANGO_SETTINGS_MODULE=settings.py python -m asyncio</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">asgiref.sync</span><span class="w"> </span><span class="kn">import</span> <span class="n">sync_to_async</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">connection</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># In an async context so you cannot use the database directly:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+<span class="go">django.core.exceptions.SynchronousOnlyOperation: You cannot call this from</span>
+<span class="go">an async context - use a thread or sync_to_async.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Nor can you pass resolved connection attributes across threads:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">await</span> <span class="n">sync_to_async</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">)()</span>
+<span class="go">django.db.utils.DatabaseError: DatabaseWrapper objects created in a thread</span>
+<span class="go">can only be used in that same thread. The object with alias &#39;default&#39; was</span>
+<span class="go">created in thread id 4371465600 and this is thread id 6131478528.</span>
+</pre></div>
+</div>
+<p>Rather, you should encapsulate all database access within a helper function
+that can be called with <code class="docutils literal notranslate"><span class="pre">sync_to_async()</span></code> without relying on the connection
+object in the calling code.</p>
+</section>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Asynchronous support</a><ul>
+<li><a class="reference internal" href="#async-views">Async views</a><ul>
+<li><a class="reference internal" href="#decorators">Decorators</a></li>
+<li><a class="reference internal" href="#queries-the-orm">Queries &amp; the ORM</a></li>
+<li><a class="reference internal" href="#performance">Performance</a></li>
+<li><a class="reference internal" href="#handling-disconnects">Handling disconnects</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#async-safety">Async safety</a></li>
+<li><a class="reference internal" href="#async-adapter-functions">Async adapter functions</a><ul>
+<li><a class="reference internal" href="#async-to-sync"><code class="docutils literal notranslate"><span class="pre">async_to_sync()</span></code></a></li>
+<li><a class="reference internal" href="#sync-to-async"><code class="docutils literal notranslate"><span class="pre">sync_to_async()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="checks.html"
+                          title="previous chapter">System check framework</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="tasks.html"
+                          title="next chapter">Django’s Tasks framework</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/topics/async.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="checks.html" title="System check framework">previous</a>
+     |
+    <a href="index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="tasks.html" title="Django’s Tasks framework">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

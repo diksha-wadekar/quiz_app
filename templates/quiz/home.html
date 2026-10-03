@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Welcome, {{ user.username }}</h3>
+<p>Questions in bank: {{ total_q }} | Added by you: {{ my_q }}</p>
+<a class="btn btn-primary" href="{% url 'quiz_start' %}">Take a quiz</a>
+<a class="btn btn-secondary" href="{% url 'question_create' %}">Add question</a>
+<h5 class="mt-4">Your recent attempts</h5>
+<table class="table">
+ <tr><th>Subject</th><th>Score</th><th>Date</th></tr>
+ {% for a in attempts %}
+ <tr>
+ <td>{{ a.subject }}</td>
+ <td><a href="{% url 'quiz_result' a.pk %}">
+ {{ a.correct }}/{{ a.total }} ({{ a.percent }}%)</a></td>
+ <td>{{ a.taken_at|date:"d M, H:i" }}</td>
+ </tr>
+ {% empty %}<tr><td colspan="3">No attempts yet</td></tr>{% endfor %}
+</table>
+{% endblock %}

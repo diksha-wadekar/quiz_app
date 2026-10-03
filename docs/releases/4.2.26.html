@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Django 4.2.26 release notes &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../_static/default.css?v=bf4d74af" />
+    <script src="../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Django 4.2.25 release notes" href="4.2.25.html" />
+    <link rel="prev" title="Django 4.2.27 release notes" href="4.2.27.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Module index" href="../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="4.2.27.html" title="Django 4.2.27 release notes">previous</a>
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="4.2.25.html" title="Django 4.2.25 release notes">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="releases-4.2.26">
+            
+  <section id="s-django-4-2-26-release-notes">
+<span id="django-4-2-26-release-notes"></span><h1>Django 4.2.26 release notes<a class="headerlink" href="#django-4-2-26-release-notes" title="Link to this heading">¶</a></h1>
+<p><em>November 5, 2025</em></p>
+<p>Django 4.2.26 fixes one security issue with severity “high” and one security
+issue with severity “moderate” in 4.2.25.</p>
+<section id="s-cve-2025-64458-potential-denial-of-service-vulnerability-in-httpresponseredirect-and-httpresponsepermanentredirect-on-windows">
+<span id="cve-2025-64458-potential-denial-of-service-vulnerability-in-httpresponseredirect-and-httpresponsepermanentredirect-on-windows"></span><h2>CVE-2025-64458: Potential denial-of-service vulnerability in <code class="docutils literal notranslate"><span class="pre">HttpResponseRedirect</span></code> and <code class="docutils literal notranslate"><span class="pre">HttpResponsePermanentRedirect</span></code> on Windows<a class="headerlink" href="#cve-2025-64458-potential-denial-of-service-vulnerability-in-httpresponseredirect-and-httpresponsepermanentredirect-on-windows" title="Link to this heading">¶</a></h2>
+<p>Python’s <a class="reference external" href="https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize" title="(in Python v3.14)"><code class="xref py py-func docutils literal notranslate"><span class="pre">NFKC</span> <span class="pre">normalization</span></code></a> is slow on
+Windows. As a consequence, <a class="reference internal" href="../ref/request-response.html#django.http.HttpResponseRedirect" title="django.http.HttpResponseRedirect"><code class="xref py py-class docutils literal notranslate"><span class="pre">HttpResponseRedirect</span></code></a>,
+<a class="reference internal" href="../ref/request-response.html#django.http.HttpResponsePermanentRedirect" title="django.http.HttpResponsePermanentRedirect"><code class="xref py py-class docutils literal notranslate"><span class="pre">HttpResponsePermanentRedirect</span></code></a>, and the shortcut
+<a class="reference internal" href="../topics/http/shortcuts.html#django.shortcuts.redirect" title="django.shortcuts.redirect"><code class="xref py py-func docutils literal notranslate"><span class="pre">redirect()</span></code></a> were subject to a potential
+denial-of-service attack via certain inputs with a very large number of Unicode
+characters (follow up to <span class="target" id="index-0"></span><a class="cve reference external" href="https://www.cve.org/CVERecord?id=CVE-2025-27556"><strong>CVE 2025-27556</strong></a>).</p>
+</section>
+<section id="s-cve-2025-64459-potential-sql-injection-via-connector-keyword-argument">
+<span id="cve-2025-64459-potential-sql-injection-via-connector-keyword-argument"></span><h2>CVE-2025-64459: Potential SQL injection via <code class="docutils literal notranslate"><span class="pre">_connector</span></code> keyword argument<a class="headerlink" href="#cve-2025-64459-potential-sql-injection-via-connector-keyword-argument" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.filter" title="django.db.models.query.QuerySet.filter"><code class="xref py py-meth docutils literal notranslate"><span class="pre">QuerySet.filter()</span></code></a>, <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.exclude" title="django.db.models.query.QuerySet.exclude"><code class="xref py py-meth docutils literal notranslate"><span class="pre">exclude()</span></code></a>, <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.get" title="django.db.models.query.QuerySet.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get()</span></code></a>,
+and <a class="reference internal" href="../ref/models/querysets.html#django.db.models.Q" title="django.db.models.Q"><code class="xref py py-class docutils literal notranslate"><span class="pre">Q</span></code></a> were subject to SQL injection using a suitably crafted
+dictionary, with dictionary expansion, as the <code class="docutils literal notranslate"><span class="pre">_connector</span></code> argument.</p>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Django 4.2.26 release notes</a><ul>
+<li><a class="reference internal" href="#cve-2025-64458-potential-denial-of-service-vulnerability-in-httpresponseredirect-and-httpresponsepermanentredirect-on-windows">CVE-2025-64458: Potential denial-of-service vulnerability in <code class="docutils literal notranslate"><span class="pre">HttpResponseRedirect</span></code> and <code class="docutils literal notranslate"><span class="pre">HttpResponsePermanentRedirect</span></code> on Windows</a></li>
+<li><a class="reference internal" href="#cve-2025-64459-potential-sql-injection-via-connector-keyword-argument">CVE-2025-64459: Potential SQL injection via <code class="docutils literal notranslate"><span class="pre">_connector</span></code> keyword argument</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="4.2.27.html"
+                          title="previous chapter">Django 4.2.27 release notes</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="4.2.25.html"
+                          title="next chapter">Django 4.2.25 release notes</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/releases/4.2.26.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="4.2.27.html" title="Django 4.2.27 release notes">previous</a>
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="4.2.25.html" title="Django 4.2.25 release notes">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

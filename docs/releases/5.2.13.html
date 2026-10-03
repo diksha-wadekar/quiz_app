@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Django 5.2.13 release notes &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../_static/default.css?v=bf4d74af" />
+    <script src="../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Django 5.2.12 release notes" href="5.2.12.html" />
+    <link rel="prev" title="Django 5.2.14 release notes" href="5.2.14.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Module index" href="../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="5.2.14.html" title="Django 5.2.14 release notes">previous</a>
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="5.2.12.html" title="Django 5.2.12 release notes">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="releases-5.2.13">
+            
+  <section id="s-django-5-2-13-release-notes">
+<span id="django-5-2-13-release-notes"></span><h1>Django 5.2.13 release notes<a class="headerlink" href="#django-5-2-13-release-notes" title="Link to this heading">¶</a></h1>
+<p><em>April 7, 2026</em></p>
+<p>Django 5.2.13 fixes one security issue with severity “moderate” and four
+security issues with severity “low” in 5.2.12.</p>
+<section id="s-cve-2026-3902-asgi-header-spoofing-via-underscore-hyphen-conflation">
+<span id="cve-2026-3902-asgi-header-spoofing-via-underscore-hyphen-conflation"></span><h2>CVE-2026-3902: ASGI header spoofing via underscore/hyphen conflation<a class="headerlink" href="#cve-2026-3902-asgi-header-spoofing-via-underscore-hyphen-conflation" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">ASGIRequest</span></code> normalizes header names following WSGI conventions, mapping
+hyphens to underscores. As a result, even in configurations where reverse
+proxies carefully strip security-sensitive headers named with hyphens, such a
+header could be spoofed by supplying a header named with underscores.</p>
+<p>Under WSGI, it is the responsibility of the server or proxy to avoid ambiguous
+mappings. (Django’s <a class="reference internal" href="../ref/django-admin.html#django-admin-runserver"><code class="xref std std-djadmin docutils literal notranslate"><span class="pre">runserver</span></code></a> was patched in <span class="target" id="index-0"></span><a class="cve reference external" href="https://www.cve.org/CVERecord?id=CVE-2015-0219"><strong>CVE 2015-0219</strong></a>.) But
+under ASGI, there is not the same uniform expectation, even if many proxies
+protect against this under default configuration (including <code class="docutils literal notranslate"><span class="pre">nginx</span></code> via
+<code class="docutils literal notranslate"><span class="pre">underscores_in_headers</span> <span class="pre">off;</span></code>).</p>
+<p>Headers containing underscores are now ignored by <code class="docutils literal notranslate"><span class="pre">ASGIRequest</span></code>, matching the
+behavior of <a class="extlink-pypi reference external" href="https://pypi.org/project/daphne/">Daphne</a>, the reference server for ASGI.</p>
+<p>This issue has severity “low” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security policy</span></a>.</p>
+</section>
+<section id="s-cve-2026-4277-privilege-abuse-in-genericinlinemodeladmin">
+<span id="cve-2026-4277-privilege-abuse-in-genericinlinemodeladmin"></span><h2>CVE-2026-4277: Privilege abuse in <code class="docutils literal notranslate"><span class="pre">GenericInlineModelAdmin</span></code><a class="headerlink" href="#cve-2026-4277-privilege-abuse-in-genericinlinemodeladmin" title="Link to this heading">¶</a></h2>
+<p>Add permissions on inline model instances were not validated on submission of
+forged <code class="docutils literal notranslate"><span class="pre">POST</span></code> data in
+<a class="reference internal" href="../ref/contrib/contenttypes.html#django.contrib.contenttypes.admin.GenericInlineModelAdmin" title="django.contrib.contenttypes.admin.GenericInlineModelAdmin"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericInlineModelAdmin</span></code></a>.</p>
+<p>This issue has severity “low” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security policy</span></a>.</p>
+</section>
+<section id="s-cve-2026-4292-privilege-abuse-in-modeladmin-list-editable">
+<span id="cve-2026-4292-privilege-abuse-in-modeladmin-list-editable"></span><h2>CVE-2026-4292: Privilege abuse in <code class="docutils literal notranslate"><span class="pre">ModelAdmin.list_editable</span></code><a class="headerlink" href="#cve-2026-4292-privilege-abuse-in-modeladmin-list-editable" title="Link to this heading">¶</a></h2>
+<p>Admin changelist forms using
+<a class="reference internal" href="../ref/contrib/admin/index.html#django.contrib.admin.ModelAdmin.list_editable" title="django.contrib.admin.ModelAdmin.list_editable"><code class="xref py py-attr docutils literal notranslate"><span class="pre">list_editable</span></code></a> incorrectly allowed new
+instances to be created via forged <code class="docutils literal notranslate"><span class="pre">POST</span></code> data.</p>
+<p>This issue has severity “low” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security policy</span></a>.</p>
+</section>
+<section id="s-cve-2026-33033-potential-denial-of-service-vulnerability-in-multipartparser-via-base64-encoded-file-upload">
+<span id="cve-2026-33033-potential-denial-of-service-vulnerability-in-multipartparser-via-base64-encoded-file-upload"></span><h2>CVE-2026-33033: Potential denial-of-service vulnerability in <code class="docutils literal notranslate"><span class="pre">MultiPartParser</span></code> via base64-encoded file upload<a class="headerlink" href="#cve-2026-33033-potential-denial-of-service-vulnerability-in-multipartparser-via-base64-encoded-file-upload" title="Link to this heading">¶</a></h2>
+<p>When using <code class="docutils literal notranslate"><span class="pre">django.http.multipartparser.MultiPartParser</span></code>, multipart uploads
+with <code class="docutils literal notranslate"><span class="pre">Content-Transfer-Encoding:</span> <span class="pre">base64</span></code> that include excessive whitespace
+may trigger repeated memory copying, potentially degrading performance.</p>
+<p>This issue has severity “moderate” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security
+policy</span></a>.</p>
+</section>
+<section id="s-cve-2026-33034-potential-denial-of-service-vulnerability-in-asgi-requests-via-memory-upload-limit-bypass">
+<span id="cve-2026-33034-potential-denial-of-service-vulnerability-in-asgi-requests-via-memory-upload-limit-bypass"></span><h2>CVE-2026-33034: Potential denial-of-service vulnerability in ASGI requests via memory upload limit bypass<a class="headerlink" href="#cve-2026-33034-potential-denial-of-service-vulnerability-in-asgi-requests-via-memory-upload-limit-bypass" title="Link to this heading">¶</a></h2>
+<p>ASGI requests with a missing or understated <code class="docutils literal notranslate"><span class="pre">Content-Length</span></code> header could
+bypass the <a class="reference internal" href="../ref/settings.html#std-setting-DATA_UPLOAD_MAX_MEMORY_SIZE"><code class="xref std std-setting docutils literal notranslate"><span class="pre">DATA_UPLOAD_MAX_MEMORY_SIZE</span></code></a> limit when reading
+<code class="docutils literal notranslate"><span class="pre">HttpRequest.body</span></code>, potentially loading an unbounded request body into
+memory and causing service degradation.</p>
+<p>This issue has severity “low” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security policy</span></a>.</p>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Django 5.2.13 release notes</a><ul>
+<li><a class="reference internal" href="#cve-2026-3902-asgi-header-spoofing-via-underscore-hyphen-conflation">CVE-2026-3902: ASGI header spoofing via underscore/hyphen conflation</a></li>
+<li><a class="reference internal" href="#cve-2026-4277-privilege-abuse-in-genericinlinemodeladmin">CVE-2026-4277: Privilege abuse in <code class="docutils literal notranslate"><span class="pre">GenericInlineModelAdmin</span></code></a></li>
+<li><a class="reference internal" href="#cve-2026-4292-privilege-abuse-in-modeladmin-list-editable">CVE-2026-4292: Privilege abuse in <code class="docutils literal notranslate"><span class="pre">ModelAdmin.list_editable</span></code></a></li>
+<li><a class="reference internal" href="#cve-2026-33033-potential-denial-of-service-vulnerability-in-multipartparser-via-base64-encoded-file-upload">CVE-2026-33033: Potential denial-of-service vulnerability in <code class="docutils literal notranslate"><span class="pre">MultiPartParser</span></code> via base64-encoded file upload</a></li>
+<li><a class="reference internal" href="#cve-2026-33034-potential-denial-of-service-vulnerability-in-asgi-requests-via-memory-upload-limit-bypass">CVE-2026-33034: Potential denial-of-service vulnerability in ASGI requests via memory upload limit bypass</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="5.2.14.html"
+                          title="previous chapter">Django 5.2.14 release notes</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="5.2.12.html"
+                          title="next chapter">Django 5.2.12 release notes</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/releases/5.2.13.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="5.2.14.html" title="Django 5.2.14 release notes">previous</a>
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="5.2.12.html" title="Django 5.2.12 release notes">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

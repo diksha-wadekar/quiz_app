@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>LayerMapping data import utility &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/default.css?v=bf4d74af" />
+    <script src="../../../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="OGR Inspection" href="ogrinspect.html" />
+    <link rel="prev" title="GeoDjango Utilities" href="utils.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../../genindex.html">Index</a>  |
+        <a title="Module index" href="../../../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="utils.html" title="GeoDjango Utilities">previous</a>
+     |
+    <a href="../../index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="ogrinspect.html" title="OGR Inspection">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="ref-contrib-gis-layermapping">
+            
+  <section id="s-module-django.contrib.gis.utils.layermapping">
+<span id="s-layermapping-data-import-utility"></span><span id="module-django.contrib.gis.utils.layermapping"></span><span id="layermapping-data-import-utility"></span><h1><code class="docutils literal notranslate"><span class="pre">LayerMapping</span></code> data import utility<a class="headerlink" href="#module-django.contrib.gis.utils.layermapping" title="Link to this heading">¶</a></h1>
+<p>The <a class="reference internal" href="#django.contrib.gis.utils.LayerMapping" title="django.contrib.gis.utils.LayerMapping"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerMapping</span></code></a> class provides a way to map the contents of
+vector spatial data files (e.g. shapefiles) into GeoDjango models.</p>
+<p>This utility grew out of the author’s personal needs to eliminate
+the code repetition that went into pulling geometries and fields out of
+a vector layer, converting to another coordinate system (e.g. WGS84), and
+then inserting into a GeoDjango model.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Use of <a class="reference internal" href="#django.contrib.gis.utils.LayerMapping" title="django.contrib.gis.utils.LayerMapping"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerMapping</span></code></a> requires GDAL.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>GIS data sources, like shapefiles, may be very large. If you find that
+<a class="reference internal" href="#django.contrib.gis.utils.LayerMapping" title="django.contrib.gis.utils.LayerMapping"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerMapping</span></code></a> is using too much memory, set <a class="reference internal" href="../../settings.html#std-setting-DEBUG"><code class="xref std std-setting docutils literal notranslate"><span class="pre">DEBUG</span></code></a> to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> in your settings. When <a class="reference internal" href="../../settings.html#std-setting-DEBUG"><code class="xref std std-setting docutils literal notranslate"><span class="pre">DEBUG</span></code></a> is set to <code class="docutils literal notranslate"><span class="pre">True</span></code>,
+Django <a class="reference internal" href="../../../faq/models.html#faq-see-raw-sql-queries"><span class="std std-ref">automatically logs</span></a> <em>every</em> SQL
+query – and when SQL statements contain geometries, this may consume more
+memory than is typical.</p>
+</div>
+<section id="s-example">
+<span id="example"></span><h2>Example<a class="headerlink" href="#example" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>You need a GDAL-supported data source, like a shapefile (here we’re using
+a simple polygon shapefile, <code class="docutils literal notranslate"><span class="pre">test_poly.shp</span></code>, with three features):</p></li>
+</ol>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.gis.gdal</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataSource</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span> <span class="o">=</span> <span class="n">DataSource</span><span class="p">(</span><span class="s2">&quot;test_poly.shp&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">layer</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span>  <span class="c1"># Exploring the fields in the layer, we only want the &#39;str&#39; field.</span>
+<span class="go">[&#39;float&#39;, &#39;int&#39;, &#39;str&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">layer</span><span class="p">))</span>  <span class="c1"># getting the number of features in the layer (should be 3)</span>
+<span class="go">3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">geom_type</span><span class="p">)</span>  <span class="c1"># Should be &#39;Polygon&#39;</span>
+<span class="go">Polygon</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">srs</span><span class="p">)</span>  <span class="c1"># WGS84 in WKT</span>
+<span class="go">GEOGCS[&quot;GCS_WGS_1984&quot;,</span>
+<span class="go">    DATUM[&quot;WGS_1984&quot;,</span>
+<span class="go">        SPHEROID[&quot;WGS_1984&quot;,6378137,298.257223563]],</span>
+<span class="go">    PRIMEM[&quot;Greenwich&quot;,0],</span>
+<span class="go">    UNIT[&quot;Degree&quot;,0.017453292519943295]]</span>
+</pre></div>
+</div>
+<ol class="arabic">
+<li><p>Now we define our corresponding Django model (make sure to use
+<a class="reference internal" href="../../django-admin.html#django-admin-migrate"><code class="xref std std-djadmin docutils literal notranslate"><span class="pre">migrate</span></code></a>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.gis.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TestGeo</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>  <span class="c1"># corresponds to the &#39;str&#39; field</span>
+    <span class="n">poly</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PolygonField</span><span class="p">(</span><span class="n">srid</span><span class="o">=</span><span class="mi">4269</span><span class="p">)</span>  <span class="c1"># we want our model in a different SRID</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Name: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+</pre></div>
+</div>
+</li>
+<li><p>Use <a class="reference internal" href="#django.contrib.gis.utils.LayerMapping" title="django.contrib.gis.utils.LayerMapping"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerMapping</span></code></a> to extract all the features and place them in the
+database:</p></li>
+</ol>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.gis.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">LayerMapping</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">geoapp.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">TestGeo</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">... </span>    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>  <span class="c1"># The &#39;name&#39; model field maps to the &#39;str&#39; layer field.</span>
+<span class="gp">... </span>    <span class="s2">&quot;poly&quot;</span><span class="p">:</span> <span class="s2">&quot;POLYGON&quot;</span><span class="p">,</span>  <span class="c1"># For geometry fields use OGC name.</span>
+<span class="gp">... </span><span class="p">}</span>  <span class="c1"># The mapping is a dictionary</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lm</span> <span class="o">=</span> <span class="n">LayerMapping</span><span class="p">(</span><span class="n">TestGeo</span><span class="p">,</span> <span class="s2">&quot;test_poly.shp&quot;</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lm</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># Save the layermap, imports the data.</span>
+<span class="go">Saved: Name: 1</span>
+<span class="go">Saved: Name: 2</span>
+<span class="go">Saved: Name: 3</span>
+</pre></div>
+</div>
+<p>Here, <a class="reference internal" href="#django.contrib.gis.utils.LayerMapping" title="django.contrib.gis.utils.LayerMapping"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerMapping</span></code></a> transformed the three geometries from the shapefile
+in their original spatial reference system (WGS84) to the spatial reference
+system of the GeoDjango model (NAD83). If no spatial reference system is
+defined for the layer, use the <code class="docutils literal notranslate"><span class="pre">source_srs</span></code> keyword with a
+<a class="reference internal" href="gdal.html#django.contrib.gis.gdal.SpatialReference" title="django.contrib.gis.gdal.SpatialReference"><code class="xref py py-class docutils literal notranslate"><span class="pre">SpatialReference</span></code></a> object to specify one.</p>
+</section>
+<section id="s-layermapping-api">
+<span id="layermapping-api"></span><h2><code class="docutils literal notranslate"><span class="pre">LayerMapping</span></code> API<a class="headerlink" href="#layermapping-api" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="django.contrib.gis.utils.LayerMapping">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LayerMapping</span></span>(<em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_srs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transaction_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'commit_on_success'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unique</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">using</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>)<a class="reference external" href="https://github.com/django/django/blob/stable/6.1.x/django/contrib/gis/utils/layermapping.py#L59"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#django.contrib.gis.utils.LayerMapping" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>The following are the arguments and keywords that may be used during
+instantiation of <code class="docutils literal notranslate"><span class="pre">LayerMapping</span></code> objects.</p>
+<table class="docutils">
+<thead>
+<tr class="row-odd"><th class="head"><p>Argument</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">model</span></code></p></td>
+<td><p>The geographic model, <em>not</em> an instance.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">data_source</span></code></p></td>
+<td><p>The path to the OGR-supported data source file
+(e.g., a shapefile). Also accepts
+<a class="reference internal" href="gdal.html#django.contrib.gis.gdal.DataSource" title="django.contrib.gis.gdal.DataSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">django.contrib.gis.gdal.DataSource</span></code></a> instances.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mapping</span></code></p></td>
+<td><p>A dictionary: keys are strings corresponding to
+the model field, and values correspond to
+string field names for the OGR feature, or if the
+model field is a geographic then it should
+correspond to the OGR geometry type,
+e.g., <code class="docutils literal notranslate"><span class="pre">'POINT'</span></code>, <code class="docutils literal notranslate"><span class="pre">'LINESTRING'</span></code>, <code class="docutils literal notranslate"><span class="pre">'POLYGON'</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils">
+<thead>
+<tr class="row-odd"><th class="head"><p>Keyword Arguments</p></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">layer</span></code></p></td>
+<td><p>The index of the layer to use from the Data Source
+(defaults to 0)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">source_srs</span></code></p></td>
+<td><p>Use this to specify the source SRS manually (for
+example, some shapefiles don’t come with a <code class="docutils literal notranslate"><span class="pre">'.prj'</span></code>
+file). An integer SRID, WKT or PROJ strings, and
+<a class="reference internal" href="gdal.html#django.contrib.gis.gdal.SpatialReference" title="django.contrib.gis.gdal.SpatialReference"><code class="xref py py-class docutils literal notranslate"><span class="pre">django.contrib.gis.gdal.SpatialReference</span></code></a>
+objects are accepted.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">encoding</span></code></p></td>
+<td><p>Specifies the character set encoding of the strings
+in the OGR data source. For example, <code class="docutils literal notranslate"><span class="pre">'latin-1'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'utf-8'</span></code>, and <code class="docutils literal notranslate"><span class="pre">'cp437'</span></code> are all valid encoding
+parameters.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">transaction_mode</span></code></p></td>
+<td><p>May be <code class="docutils literal notranslate"><span class="pre">'commit_on_success'</span></code> (default) or
+<code class="docutils literal notranslate"><span class="pre">'autocommit'</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">transform</span></code></p></td>
+<td><p>Setting this to False will disable coordinate
+transformations. In other words, geometries will
+be inserted into the database unmodified from their
+original state in the data source.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">unique</span></code></p></td>
+<td><p>Setting this to the name, or a tuple of names,
+from the given  model will create models unique
+only to the given name(s). Geometries from
+each feature will be added into the collection
+associated with the unique model. Forces
+the transaction mode to be <code class="docutils literal notranslate"><span class="pre">'autocommit'</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">using</span></code></p></td>
+<td><p>Sets the database to use when importing spatial data.
+Default is <code class="docutils literal notranslate"><span class="pre">'default'</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+<section id="s-save-keyword-arguments">
+<span id="save-keyword-arguments"></span><h3><code class="docutils literal notranslate"><span class="pre">save()</span></code> Keyword Arguments<a class="headerlink" href="#save-keyword-arguments" title="Link to this heading">¶</a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="django.contrib.gis.utils.LayerMapping.save">
+<span class="sig-prename descclassname"><span class="pre">LayerMapping.</span></span><span class="sig-name descname"><span class="pre">save</span></span>(<em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fid_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">sys.stdout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>)<a class="reference external" href="https://github.com/django/django/blob/stable/6.1.x/django/contrib/gis/utils/layermapping.py#L560"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#django.contrib.gis.utils.LayerMapping.save" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>The <code class="docutils literal notranslate"><span class="pre">save()</span></code> method also accepts keywords. These keywords are
+used for controlling output logging, error handling, and for importing
+specific feature ranges.</p>
+<table class="docutils">
+<thead>
+<tr class="row-odd"><th class="head"><p>Save Keyword Arguments</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fid_range</span></code></p></td>
+<td><p>May be set with a slice or tuple of
+(begin, end) feature ID’s to map from
+the data source. In other words, this
+keyword enables the user to selectively
+import a subset range of features in the
+geographic data source.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">progress</span></code></p></td>
+<td><p>When this keyword is set, status information
+will be printed giving the number of features
+processed and successfully saved. By default,
+progress information will be printed every 1000
+features processed, however, this default may
+be overridden by setting this keyword with an
+integer for the desired interval.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">silent</span></code></p></td>
+<td><p>By default, non-fatal error notifications are
+printed to <code class="docutils literal notranslate"><span class="pre">sys.stdout</span></code>, but this keyword may
+be set to disable these notifications.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">step</span></code></p></td>
+<td><p>If set with an integer, transactions will
+occur at every step interval. For example, if
+<code class="docutils literal notranslate"><span class="pre">step=1000</span></code>, a commit would occur after the
+1,000th feature, the 2,000th feature etc.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">stream</span></code></p></td>
+<td><p>Status information will be written to this file
+handle. Defaults to using <code class="docutils literal notranslate"><span class="pre">sys.stdout</span></code>, but
+any object with a <code class="docutils literal notranslate"><span class="pre">write</span></code> method is supported.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">strict</span></code></p></td>
+<td><p>Execution of the model mapping will cease upon
+the first error encountered. The default value
+(<code class="docutils literal notranslate"><span class="pre">False</span></code>)
+behavior is to attempt to continue.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">verbose</span></code></p></td>
+<td><p>If set, information will be printed
+subsequent to each model save
+executed on the database.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="s-troubleshooting">
+<span id="troubleshooting"></span><h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">¶</a></h2>
+<section id="s-running-out-of-memory">
+<span id="running-out-of-memory"></span><h3>Running out of memory<a class="headerlink" href="#running-out-of-memory" title="Link to this heading">¶</a></h3>
+<p>As noted in the warning at the top of this section, Django stores all SQL
+queries when <code class="docutils literal notranslate"><span class="pre">DEBUG=True</span></code>. Set <code class="docutils literal notranslate"><span class="pre">DEBUG=False</span></code> in your settings, and this
+should stop excessive memory use when running <code class="docutils literal notranslate"><span class="pre">LayerMapping</span></code> scripts.</p>
+</section>
+<section id="s-mysql-max-allowed-packet-error">
+<span id="mysql-max-allowed-packet-error"></span><h3>MySQL: <code class="docutils literal notranslate"><span class="pre">max_allowed_packet</span></code> error<a class="headerlink" href="#mysql-max-allowed-packet-error" title="Link to this heading">¶</a></h3>
+<p>If you encounter the following error when using <code class="docutils literal notranslate"><span class="pre">LayerMapping</span></code> and MySQL:</p>
+<div class="highlight-pytb notranslate"><div class="highlight"><pre><span></span><span class="x">OperationalError: (1153, &quot;Got a packet bigger than &#39;max_allowed_packet&#39; bytes&quot;)</span>
+</pre></div>
+</div>
+<p>Then the solution is to increase the value of the <code class="docutils literal notranslate"><span class="pre">max_allowed_packet</span></code>
+setting in your MySQL configuration. For example, the default value may
+be something low like one megabyte – the setting may be modified in MySQL’s
+configuration file (<code class="docutils literal notranslate"><span class="pre">my.cnf</span></code>) in the <code class="docutils literal notranslate"><span class="pre">[mysqld]</span></code> section:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">max_allowed_packet</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">10M</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">LayerMapping</span></code> data import utility</a><ul>
+<li><a class="reference internal" href="#example">Example</a></li>
+<li><a class="reference internal" href="#layermapping-api"><code class="docutils literal notranslate"><span class="pre">LayerMapping</span></code> API</a><ul>
+<li><a class="reference internal" href="#save-keyword-arguments"><code class="docutils literal notranslate"><span class="pre">save()</span></code> Keyword Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li><a class="reference internal" href="#running-out-of-memory">Running out of memory</a></li>
+<li><a class="reference internal" href="#mysql-max-allowed-packet-error">MySQL: <code class="docutils literal notranslate"><span class="pre">max_allowed_packet</span></code> error</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="utils.html"
+                          title="previous chapter">GeoDjango Utilities</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="ogrinspect.html"
+                          title="next chapter">OGR Inspection</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/ref/contrib/gis/layermapping.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="utils.html" title="GeoDjango Utilities">previous</a>
+     |
+    <a href="../../index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="ogrinspect.html" title="OGR Inspection">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

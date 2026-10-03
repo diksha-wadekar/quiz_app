@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="col-md-5 mx-auto text-center">
+    <h3>Quiz completed!</h3>
+    <p class="fs-5">Subject: {{ a.subject }}</p>
+    <p>Correct: {{ a.correct }}<br>Wrong: {{ a.wrong }}<br>Score: <b>{{ a.percent }}%</b></p>
+    <a class="btn btn-primary" href="{% url 'quiz_start' %}">Try again</a>
+    <a class="btn btn-secondary" href="{% url 'home' %}">Home</a>
+</div>
+{% endblock %}

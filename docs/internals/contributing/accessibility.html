@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Accessibility &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../../_static/default.css?v=bf4d74af" />
+    <script src="../../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Committing code" href="committing-code.html" />
+    <link rel="prev" title="JavaScript code" href="writing-code/javascript.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../genindex.html">Index</a>  |
+        <a title="Module index" href="../../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="writing-code/javascript.html" title="JavaScript code">previous</a>
+     |
+    <a href="../index.html" title="Django internals" accesskey="U">up</a>
+   |
+    <a href="committing-code.html" title="Committing code">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="internals-contributing-accessibility">
+            
+  <section id="s-accessibility">
+<span id="accessibility"></span><h1>Accessibility<a class="headerlink" href="#accessibility" title="Link to this heading">¶</a></h1>
+<p>The Django project is committed to ensuring that websites built with Django are
+usable by everyone, including people with disabilities. Django’s built-in
+components, such as the admin interface and default form rendering, should
+adhere to established accessibility standards and meet our own targets for
+supporting specific input devices and assistive technologies.</p>
+<section id="s-accessibility-standards">
+<span id="s-id1"></span><span id="accessibility-standards"></span><span id="id1"></span><h2>Accessibility standards<a class="headerlink" href="#accessibility-standards" title="Link to this heading">¶</a></h2>
+<p>We work to conform with the <a class="reference external" href="https://www.w3.org/TR/WCAG22/">Web Content Accessibility Guidelines</a> (WCAG),
+version 2.2, at the AA level. WCAG is the most established standard for web
+accessibility. <a class="reference external" href="https://www.w3.org/WAI/WCAG22/quickref/?currentsidebar=%23col_overview&amp;levels=aaa">AA-level guidelines</a> are the most common legal compliance
+target worldwide.</p>
+<p>We also aim to follow other best practices, such as:</p>
+<ul class="simple">
+<li><p>WCAG 2.2 <a class="reference external" href="https://www.w3.org/WAI/WCAG22/quickref/?currentsidebar=%23col_overview&amp;levels=a%2Caa">AAA-level guidelines</a> – stricter criteria that go beyond the AA
+level.</p></li>
+<li><p>The upcoming <a class="reference external" href="https://www.w3.org/TR/wcag-3.0/">WCAG 3.0</a> guidelines – a new, evolving standard that aims to
+unify and improve upon previous versions of WCAG.</p></li>
+<li><p><a class="reference external" href="https://www.w3.org/TR/ATAG20/">Authoring Tool Accessibility Guidelines</a> (ATAG) 2.0 – guidelines for
+software and services that are used to produce web content.</p></li>
+</ul>
+<p>To learn more about accessibility without diving straight into standards, we
+recommend <a class="reference external" href="https://www.a11yproject.com/">The A11Y Project</a>, a community-driven effort to make digital
+accessibility easier.</p>
+</section>
+<section id="s-support-targets-and-testing">
+<span id="s-accessibility-support-targets"></span><span id="support-targets-and-testing"></span><span id="accessibility-support-targets"></span><h2>Support targets and testing<a class="headerlink" href="#support-targets-and-testing" title="Link to this heading">¶</a></h2>
+<p>Beyond standards, we want to make sure Django actually works for people using a
+wide range of input devices and assistive technologies. This has benefits to
+make sure Django works better <a class="reference external" href="https://en.wikipedia.org/wiki/Curb_cut_effect">for everyone</a>. The best way to do this
+effectively is to take accessibility considerations into account as part of
+designing features. If in doubt, consult with users who rely on assistive
+technologies or with accessibility experts. You can reach out to the
+<a class="reference external" href="https://www.djangoproject.com/foundation/teams/#accessibility-team">Accessibility team</a> via the <a class="reference external" href="https://forum.djangoproject.com/c/internals/accessibility/26">Accessibility Django forum topic</a> or via the
+<code class="docutils literal notranslate"><span class="pre">#accessibility</span></code> channel on the <a class="reference external" href="https://chat.djangoproject.com">Django Discord server</a>.</p>
+<section id="s-testing-baseline">
+<span id="s-accessibility-testing-baseline"></span><span id="testing-baseline"></span><span id="accessibility-testing-baseline"></span><h3>Testing baseline<a class="headerlink" href="#testing-baseline" title="Link to this heading">¶</a></h3>
+<p>Design the UI with accessibility in mind, and the testing will only be needed
+as a final check. For more complex interfaces, confer with other contributors
+to decide on testing targets. Reach out to the <a class="reference external" href="https://www.djangoproject.com/foundation/teams/#accessibility-team">Accessibility team</a> for
+support and to coordinate testing.</p>
+<p>Always test user interface changes with:</p>
+<ul class="simple">
+<li><p>Keyboard-only navigation. Common issues include:</p>
+<ul>
+<li><p>An interactive element can’t be reached using the Tab or arrow keys.</p></li>
+<li><p>An interactive element “traps” input focus and prevents navigating away.</p></li>
+<li><p>An interactive element doesn’t give a visible indication when it has input
+focus.</p></li>
+<li><p>The focus order is inconsistent with the logical order that’s communicated
+visually.</p></li>
+</ul>
+</li>
+<li><p>The <a class="reference external" href="https://accessibilityinsights.io/">Accessibility Insights</a> browser extension’s automated checks feature,
+or an equivalent tool with the <a class="reference external" href="https://github.com/dequelabs/axe-core">Axe</a> checker.</p></li>
+</ul>
+<p>Where the UI changes could affect those modalities, also test with:</p>
+<ul class="simple">
+<li><p>Touch-only navigation. Common issues include:</p>
+<ul>
+<li><p>A touch target (interactive element) is too small.</p></li>
+<li><p>Hover-based interaction that does not translate to touch, such as a
+hover-only tooltip.</p></li>
+</ul>
+</li>
+<li><p>400% browser zoom. Common issues include:</p>
+<ul>
+<li><p>Content is cut off or disappears when zoomed.</p></li>
+<li><p>Content that does not inherently require a two-dimensional layout causes
+scrolling in both directions (vertical and horizontal). Two-dimensional
+scrolling is acceptable for content like images, maps, videos, and data
+tables, which require both dimensions to be usable.</p></li>
+</ul>
+</li>
+<li><p>Forced-colors mode (for example Windows Contrast Themes). Note that this can
+be tested via the <code class="docutils literal notranslate"><span class="pre">&quot;high_contrast&quot;</span></code> mode in the <a class="reference internal" href="writing-code/unit-tests.html#screenshot-tests"><span class="std std-ref">screenshot tests</span></a>. Common issues include:</p>
+<ul>
+<li><p>Over-reliance on color for meaning, which is lost in forced-colors mode.</p></li>
+<li><p>Use of <code class="docutils literal notranslate"><span class="pre">!important</span></code> or inline styles may break forced-colors mode.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="s-recommended-assistive-technologies">
+<span id="s-assistive-technologies"></span><span id="recommended-assistive-technologies"></span><span id="assistive-technologies"></span><h3>Recommended assistive technologies<a class="headerlink" href="#recommended-assistive-technologies" title="Link to this heading">¶</a></h3>
+<p>Where the UI changes could affect assistive technologies, here are popular free
+options we recommend testing with.</p>
+<p>For Windows:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.nvaccess.org/">NVDA</a> - recommended with Firefox ESR</p></li>
+<li><p><a class="reference external" href="https://support.microsoft.com/en-us/windows/complete-guide-to-narrator-e4397a0d-ef4f-b386-d8ae-c172f109bdb1">Narrator</a> - recommended with Microsoft Edge</p></li>
+<li><p>Windows Magnifier</p></li>
+<li><p>Windows Speech Recognition</p></li>
+<li><p><a class="reference external" href="https://support.microsoft.com/en-us/windows/change-color-contrast-in-windows-fedc744c-90ac-69df-aed5-c8a90125e696">Contrast themes</a></p></li>
+</ul>
+<p>For macOS:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://support.apple.com/en-gb/guide/voiceover-guide/welcome/web">VoiceOver</a> - recommended with Safari</p></li>
+<li><p>macOS Zoom</p></li>
+<li><p>macOS Voice Control</p></li>
+</ul>
+<p>For Linux:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://help.gnome.org/users/orca/stable/">Orca</a> - recommended with Firefox ESR</p></li>
+</ul>
+<p>For mobile or tablet:</p>
+<ul class="simple">
+<li><p>VoiceOver on iOS, or <a class="reference external" href="https://support.google.com/accessibility/android/answer/6283677">TalkBack</a> on Android</p></li>
+</ul>
+<p>The following are popular licensed options. If you are a user of these, or can
+work with a user holding a license, also test against:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.freedomscientific.com/products/software/jaws/">JAWS</a> on Windows</p></li>
+<li><p><a class="reference external" href="https://www.nuance.com/en-gb/dragon.html">Dragon</a> on Windows</p></li>
+</ul>
+</section>
+</section>
+<section id="s-known-issues-and-how-to-help">
+<span id="s-accessibility-known-issues-how-to-help"></span><span id="known-issues-and-how-to-help"></span><span id="accessibility-known-issues-how-to-help"></span><h2>Known issues and how to help<a class="headerlink" href="#known-issues-and-how-to-help" title="Link to this heading">¶</a></h2>
+<p>There are parts of Django that do not meet our accessibility targets. We
+actively work on fixing issues, both as part of ongoing maintenance and bigger
+overhauls. To learn about known issues, and get involved, see:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">#accessibility</span></code> on the <a class="reference external" href="https://chat.djangoproject.com">Django Discord server</a>.</p></li>
+<li><p>The <a class="reference external" href="https://forum.djangoproject.com/c/internals/accessibility/26">Accessibility Django forum topic</a>.</p></li>
+<li><p><a class="reference external" href="https://code.djangoproject.com/query?status=!closed&amp;keywords=~accessibility">Accessibility issues on the ticket tracker</a>.</p></li>
+<li><p>Our <a class="reference external" href="https://github.com/orgs/django/projects/7">django accessibility improvements</a> project board.</p></li>
+<li><p>The <a class="reference external" href="https://www.djangoproject.com/foundation/teams/#accessibility-team">Accessibility team</a>.</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Accessibility</a><ul>
+<li><a class="reference internal" href="#accessibility-standards">Accessibility standards</a></li>
+<li><a class="reference internal" href="#support-targets-and-testing">Support targets and testing</a><ul>
+<li><a class="reference internal" href="#testing-baseline">Testing baseline</a></li>
+<li><a class="reference internal" href="#recommended-assistive-technologies">Recommended assistive technologies</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#known-issues-and-how-to-help">Known issues and how to help</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="writing-code/javascript.html"
+                          title="previous chapter">JavaScript code</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="committing-code.html"
+                          title="next chapter">Committing code</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/internals/contributing/accessibility.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="writing-code/javascript.html" title="JavaScript code">previous</a>
+     |
+    <a href="../index.html" title="Django internals" accesskey="U">up</a>
+   |
+    <a href="committing-code.html" title="Committing code">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

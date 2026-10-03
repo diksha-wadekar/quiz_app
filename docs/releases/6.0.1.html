@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Django 6.0.1 release notes &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../_static/default.css?v=bf4d74af" />
+    <script src="../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Django 6.0 release notes" href="6.0.html" />
+    <link rel="prev" title="Django 6.0.2 release notes" href="6.0.2.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Module index" href="../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="6.0.2.html" title="Django 6.0.2 release notes">previous</a>
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="6.0.html" title="Django 6.0 release notes">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="releases-6.0.1">
+            
+  <section id="s-django-6-0-1-release-notes">
+<span id="django-6-0-1-release-notes"></span><h1>Django 6.0.1 release notes<a class="headerlink" href="#django-6-0-1-release-notes" title="Link to this heading">¶</a></h1>
+<p><em>January 6, 2026</em></p>
+<p>Django 6.0.1 fixes one data loss bug introduced in Django 5.2 as well as
+several other bugs in Django 6.0.</p>
+<section id="s-bugfixes">
+<span id="bugfixes"></span><h2>Bugfixes<a class="headerlink" href="#bugfixes" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Fixed a bug in Django 5.2 where data exceeding <code class="docutils literal notranslate"><span class="pre">max_length</span></code> was silently
+truncated by <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.bulk_create" title="django.db.models.query.QuerySet.bulk_create"><code class="xref py py-meth docutils literal notranslate"><span class="pre">QuerySet.bulk_create()</span></code></a> on PostgreSQL (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/33647">#33647</a>).</p></li>
+<li><p>Fixed a regression in Django 6.0 where <a class="reference internal" href="../ref/templates/builtins.html#std-templatetag-querystring"><code class="xref std std-ttag docutils literal notranslate"><span class="pre">querystring</span></code></a> mishandled
+multi-value <a class="reference internal" href="../ref/request-response.html#django.http.QueryDict" title="django.http.QueryDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">QueryDict</span></code></a> keys, both by only preserving the
+last value and by incorrectly handling <code class="docutils literal notranslate"><span class="pre">None</span></code> values (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/36783">#36783</a>).</p></li>
+<li><p>Fixed a regression in Django 6.0 that prevented changing the name of a
+<a class="reference internal" href="../ref/models/fields.html#django.db.models.ManyToManyField" title="django.db.models.ManyToManyField"><code class="xref py py-class docutils literal notranslate"><span class="pre">ManyToManyField</span></code></a> from taking effect when applying
+migrations (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/36800">#36800</a>).</p></li>
+<li><p>Fixed a bug where management command colorized help (introduced in
+Python 3.14) ignored the <a class="reference internal" href="../ref/django-admin.html#cmdoption-no-color"><code class="xref std std-option docutils literal notranslate"><span class="pre">--no-color</span></code></a> option and the
+<span class="target" id="index-0"></span><a class="reference internal" href="../ref/django-admin.html#envvar-DJANGO_COLORS"><code class="xref std std-envvar docutils literal notranslate"><span class="pre">DJANGO_COLORS</span></code></a> setting (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/36376">#36376</a>).</p></li>
+<li><p>Fixed a regression in Django 6.0 that caused
+<a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.bulk_create" title="django.db.models.query.QuerySet.bulk_create"><code class="xref py py-meth docutils literal notranslate"><span class="pre">bulk_create()</span></code></a> to crash
+when introspecting the connection on SQLite (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/36818">#36818</a>).</p></li>
+<li><p>Fixed a visual regression in Django 6.0 for admin form fields grouped under a
+<code class="docutils literal notranslate"><span class="pre">&lt;fieldset&gt;</span></code> in Safari (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/36807">#36807</a>).</p></li>
+<li><p>Fixed a crash in Django 6.0 caused by infinite recursion when calling
+<code class="docutils literal notranslate"><span class="pre">repr()</span></code> on an unevaluated <code class="docutils literal notranslate"><span class="pre">django.utils.csp.LazyNonce</span></code> instance
+(<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/36810">#36810</a>).</p></li>
+<li><p>Fixed a regression in Django 6.0 where <a class="reference internal" href="../ref/urls.html#django.urls.path" title="django.urls.path"><code class="xref py py-func docutils literal notranslate"><span class="pre">path()</span></code></a> routes
+defined using <a class="reference internal" href="../ref/utils.html#django.utils.translation.gettext_lazy" title="django.utils.translation.gettext_lazy"><code class="xref py py-func docutils literal notranslate"><span class="pre">gettext_lazy()</span></code></a> failed to
+resolve correctly (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/36796">#36796</a>).</p></li>
+<li><p>Fixed a regression in Django 6.0 where the <a class="reference internal" href="../ref/forms/widgets.html#django.forms.Widget.use_fieldset" title="django.forms.Widget.use_fieldset"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Widget.use_fieldset</span></code></a>
+attribute of <a class="reference internal" href="../ref/forms/widgets.html#django.forms.ClearableFileInput" title="django.forms.ClearableFileInput"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClearableFileInput</span></code></a> was flipped
+from <code class="docutils literal notranslate"><span class="pre">False</span></code> to <code class="docutils literal notranslate"><span class="pre">True</span></code> (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/36829">#36829</a>).</p></li>
+<li><p>Reverted an undocumented optimization in Django 6.0 that modified permission
+<a class="reference internal" href="../ref/contrib/auth.html#django.contrib.auth.models.Permission.name" title="django.contrib.auth.models.Permission.name"><code class="xref py py-attr docutils literal notranslate"><span class="pre">name</span></code></a> and
+<a class="reference internal" href="../ref/contrib/auth.html#django.contrib.auth.models.Permission.codename" title="django.contrib.auth.models.Permission.codename"><code class="xref py py-attr docutils literal notranslate"><span class="pre">codename</span></code></a> values when renaming
+models via a migration. This change could affect unrelated
+<a class="reference internal" href="../ref/contrib/auth.html#django.contrib.auth.models.Permission" title="django.contrib.auth.models.Permission"><code class="xref py py-class docutils literal notranslate"><span class="pre">Permission</span></code></a> objects (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/36843">#36843</a>) and
+did not report conflicts (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/36793">#36793</a>).</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Django 6.0.1 release notes</a><ul>
+<li><a class="reference internal" href="#bugfixes">Bugfixes</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="6.0.2.html"
+                          title="previous chapter">Django 6.0.2 release notes</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="6.0.html"
+                          title="next chapter">Django 6.0 release notes</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/releases/6.0.1.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="6.0.2.html" title="Django 6.0.2 release notes">previous</a>
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="6.0.html" title="Django 6.0 release notes">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="col-md-5 mx-auto">
+ <h3>Take a quiz</h3>
+ <form method="post">{% csrf_token %}
+ <label>Subject</label>
+ <select name="subject" class="form-control mb-3" required>
+ {% for s in subjects %}
+ <option value="{{ s.pk }}">{{ s.name }} ({{ s.questions.count }} questions)</option>
+ {% endfor %}
+ </select>
+ <label>Number of questions</label>
+ <input type="number" name="count" value="5" min="1" max="50" class="form-control mb-3">
+ <button class="btn btn-primary">Start</button>
+ </form>
+</div>
+{% endblock %}

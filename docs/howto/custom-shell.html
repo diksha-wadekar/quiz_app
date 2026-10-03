@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>How to customize the shell command &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../_static/default.css?v=bf4d74af" />
+    <script src="../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Migrating email to mailers" href="mailers-migration.html" />
+    <link rel="prev" title="How to create custom django-admin commands" href="custom-management-commands.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Module index" href="../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="custom-management-commands.html" title="How to create custom &lt;code class=&#34;docutils literal notranslate&#34;&gt;&lt;span class=&#34;pre&#34;&gt;django-admin&lt;/span&gt;&lt;/code&gt; commands">previous</a>
+     |
+    <a href="index.html" title="How-to guides" accesskey="U">up</a>
+   |
+    <a href="mailers-migration.html" title="Migrating email to mailers">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="howto-custom-shell">
+            
+  <section id="s-how-to-customize-the-shell-command">
+<span id="how-to-customize-the-shell-command"></span><h1>How to customize the <code class="docutils literal notranslate"><span class="pre">shell</span></code> command<a class="headerlink" href="#how-to-customize-the-shell-command" title="Link to this heading">¶</a></h1>
+<p>The Django <a class="reference internal" href="../ref/django-admin.html#django-admin-shell"><code class="xref std std-djadmin docutils literal notranslate"><span class="pre">shell</span></code></a> is an interactive Python environment that provides
+access to models and settings, making it useful for testing code, experimenting
+with queries, and interacting with application data.</p>
+<p>Customizing the <a class="reference internal" href="../ref/django-admin.html#django-admin-shell"><code class="xref std std-djadmin docutils literal notranslate"><span class="pre">shell</span></code></a> command allows adding extra functionality or
+pre-loading specific modules. To do this, create a new management command that
+subclasses <code class="docutils literal notranslate"><span class="pre">django.core.management.commands.shell.Command</span></code> and overrides the
+existing <code class="docutils literal notranslate"><span class="pre">shell</span></code> management command. For more details, refer to the guide on
+<a class="reference internal" href="custom-management-commands.html#overriding-commands"><span class="std std-ref">overriding commands</span></a>.</p>
+<section id="s-customize-automatic-imports">
+<span id="s-customizing-shell-auto-imports"></span><span id="customize-automatic-imports"></span><span id="customizing-shell-auto-imports"></span><h2>Customize automatic imports<a class="headerlink" href="#customize-automatic-imports" title="Link to this heading">¶</a></h2>
+<p>To customize the automatic import behavior of the <a class="reference internal" href="../ref/django-admin.html#django-admin-shell"><code class="xref std std-djadmin docutils literal notranslate"><span class="pre">shell</span></code></a> management
+command, override the <code class="docutils literal notranslate"><span class="pre">get_auto_imports()</span></code> method. This method should return
+a sequence of import paths for objects or modules available in the application.
+For example:</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text"><code class="docutils literal notranslate"><span class="pre">polls/management/commands/shell.py</span></code></span><a class="headerlink" href="#id1" title="Link to this code">¶</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.core.management.commands</span><span class="w"> </span><span class="kn">import</span> <span class="n">shell</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Command</span><span class="p">(</span><span class="n">shell</span><span class="o">.</span><span class="n">Command</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_auto_imports</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_auto_imports</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span>
+            <span class="s2">&quot;django.urls.reverse&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;django.urls.resolve&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<p>The customization above adds <a class="reference internal" href="../ref/urlresolvers.html#django.urls.resolve" title="django.urls.resolve"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve()</span></code></a> and
+<a class="reference internal" href="../ref/urlresolvers.html#django.urls.reverse" title="django.urls.reverse"><code class="xref py py-func docutils literal notranslate"><span class="pre">reverse()</span></code></a> to the default namespace, which already includes
+all models from the apps listed in <a class="reference internal" href="../ref/settings.html#std-setting-INSTALLED_APPS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">INSTALLED_APPS</span></code></a> plus what is
+imported by default. These objects will be available in the <code class="docutils literal notranslate"><span class="pre">shell</span></code> without
+requiring a manual import.</p>
+<p>Running this customized <code class="docutils literal notranslate"><span class="pre">shell</span></code> command with <code class="docutils literal notranslate"><span class="pre">verbosity=2</span></code> would show:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">13 objects imported automatically:</span>
+
+<span class="go">  from django.db import connection, reset_queries, models</span>
+<span class="go">  from django.conf import settings</span>
+<span class="go">  from django.contrib.admin.models import LogEntry</span>
+<span class="go">  from django.contrib.auth.models import Group, Permission, User</span>
+<span class="go">  from django.contrib.contenttypes.models import ContentType</span>
+<span class="go">  from django.contrib.sessions.models import Session</span>
+<span class="go">  from django.urls import resolve, reverse</span>
+<span class="go">  from django.utils import timezone</span>
+</pre></div>
+</div>
+<div class="versionchanged">
+<span class="title">Changed in Django 6.0:</span> <p>Automatic imports of common utilities, such as <code class="docutils literal notranslate"><span class="pre">django.conf.settings</span></code>,
+were added.</p>
+</div>
+<p>If an overridden <code class="docutils literal notranslate"><span class="pre">shell</span></code> command includes paths that cannot be imported,
+these errors are shown when <code class="docutils literal notranslate"><span class="pre">verbosity</span></code> is set to <code class="docutils literal notranslate"><span class="pre">1</span></code> or higher. Duplicate
+imports are automatically handled.</p>
+<p>Note that automatic imports can be disabled for a specific <code class="docutils literal notranslate"><span class="pre">shell</span></code> session
+using the <a class="reference internal" href="../ref/django-admin.html#cmdoption-shell-no-imports"><code class="xref std std-option docutils literal notranslate"><span class="pre">--no-imports</span></code></a> flag. To permanently
+disable automatic imports, override <code class="docutils literal notranslate"><span class="pre">get_auto_imports()</span></code> to return <code class="docutils literal notranslate"><span class="pre">None</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Command</span><span class="p">(</span><span class="n">shell</span><span class="o">.</span><span class="n">Command</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_auto_imports</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">How to customize the <code class="docutils literal notranslate"><span class="pre">shell</span></code> command</a><ul>
+<li><a class="reference internal" href="#customize-automatic-imports">Customize automatic imports</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="custom-management-commands.html"
+                          title="previous chapter">How to create custom <code class="docutils literal notranslate"><span class="pre">django-admin</span></code> commands</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="mailers-migration.html"
+                          title="next chapter">Migrating email to mailers</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/howto/custom-shell.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="custom-management-commands.html" title="How to create custom &lt;code class=&#34;docutils literal notranslate&#34;&gt;&lt;span class=&#34;pre&#34;&gt;django-admin&lt;/span&gt;&lt;/code&gt; commands">previous</a>
+     |
+    <a href="index.html" title="How-to guides" accesskey="U">up</a>
+   |
+    <a href="mailers-migration.html" title="Migrating email to mailers">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Django 6.1 release notes &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../_static/default.css?v=bf4d74af" />
+    <script src="../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Django 6.0.9 release notes" href="6.0.9.html" />
+    <link rel="prev" title="Django 6.1.1 release notes" href="6.1.1.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Module index" href="../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="6.1.1.html" title="Django 6.1.1 release notes">previous</a>
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="6.0.9.html" title="Django 6.0.9 release notes">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="releases-6.1">
+            
+  <section id="s-django-6-1-release-notes">
+<span id="django-6-1-release-notes"></span><h1>Django 6.1 release notes<a class="headerlink" href="#django-6-1-release-notes" title="Link to this heading">¶</a></h1>
+<p><em>August 5, 2026</em></p>
+<p>Welcome to Django 6.1!</p>
+<p>These release notes cover the <a class="reference internal" href="#whats-new-6-1"><span class="std std-ref">new features</span></a>, as well as
+some <a class="reference internal" href="#backwards-incompatible-6-1"><span class="std std-ref">backwards incompatible changes</span></a> you’ll
+want to be aware of when upgrading from Django 6.0 or earlier. We’ve
+<a class="reference internal" href="#deprecated-features-6-1"><span class="std std-ref">begun the deprecation process for some features</span></a>.</p>
+<p>See the <a class="reference internal" href="../howto/upgrade-version.html"><span class="doc">How to upgrade Django to a newer version</span></a> guide if you’re updating an existing
+project.</p>
+<p>Mainstream support is expected to end in April 2027. Extended support is
+expected to end in December 2027.</p>
+<section id="s-python-compatibility">
+<span id="python-compatibility"></span><h2>Python compatibility<a class="headerlink" href="#python-compatibility" title="Link to this heading">¶</a></h2>
+<p>Django 6.1 supports Python 3.12, 3.13, and 3.14. We <strong>highly recommend</strong>, and
+only officially support, the latest release of each series.</p>
+</section>
+<section id="s-what-s-new-in-django-6-1">
+<span id="s-whats-new-6-1"></span><span id="what-s-new-in-django-6-1"></span><span id="whats-new-6-1"></span><h2>What’s new in Django 6.1<a class="headerlink" href="#what-s-new-in-django-6-1" title="Link to this heading">¶</a></h2>
+<section id="s-model-field-fetch-modes">
+<span id="model-field-fetch-modes"></span><h3>Model field fetch modes<a class="headerlink" href="#model-field-fetch-modes" title="Link to this heading">¶</a></h3>
+<p>The on-demand fetching behavior of model fields is now configurable with
+<a class="reference internal" href="../topics/db/fetch-modes.html"><span class="doc">fetch modes</span></a>. These modes allow you to control
+how Django fetches data from the database when an unfetched field is accessed.</p>
+<p>Django provides three fetch modes:</p>
+<ol class="arabic">
+<li><p><code class="docutils literal notranslate"><span class="pre">FETCH_ONE</span></code>, the default, fetches the missing field for the current
+instance only. This mode represents Django’s existing behavior.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FETCH_PEERS</span></code> fetches a missing field for all instances that came from
+the same <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet" title="django.db.models.query.QuerySet"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuerySet</span></code></a>.</p>
+<p>This mode works like an on-demand <code class="docutils literal notranslate"><span class="pre">prefetch_related()</span></code>. It can reduce most
+cases of the “N+1 queries problem” to two queries without any work to
+maintain a list of fields to prefetch.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FETCH_RAISE</span></code> raises a <a class="reference internal" href="../ref/exceptions.html#django.core.exceptions.FieldFetchBlocked" title="django.core.exceptions.FieldFetchBlocked"><code class="xref py py-exc docutils literal notranslate"><span class="pre">FieldFetchBlocked</span></code></a>
+exception.</p>
+<p>This mode can prevent unintentional queries in performance-critical
+sections of code.</p>
+</li>
+</ol>
+<p>Use the new method <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.fetch_mode" title="django.db.models.query.QuerySet.fetch_mode"><code class="xref py py-meth docutils literal notranslate"><span class="pre">QuerySet.fetch_mode()</span></code></a> to set the fetch mode for model
+instances fetched by the <code class="docutils literal notranslate"><span class="pre">QuerySet</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+
+<span class="n">books</span> <span class="o">=</span> <span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">fetch_mode</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">FETCH_PEERS</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">book</span> <span class="ow">in</span> <span class="n">books</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">book</span><span class="o">.</span><span class="n">author</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Despite the loop accessing the <code class="docutils literal notranslate"><span class="pre">author</span></code> foreign key on each instance, the
+<code class="docutils literal notranslate"><span class="pre">FETCH_PEERS</span></code> fetch mode will make the above example perform only two
+queries:</p>
+<ol class="arabic simple">
+<li><p>Fetch all books.</p></li>
+<li><p>Fetch associated authors.</p></li>
+</ol>
+<p>See <a class="reference internal" href="../topics/db/fetch-modes.html"><span class="doc">fetch modes</span></a> for more details.</p>
+</section>
+<section id="s-database-level-delete-options-for-foreignkey-on-delete">
+<span id="database-level-delete-options-for-foreignkey-on-delete"></span><h3>Database-level delete options for <code class="docutils literal notranslate"><span class="pre">ForeignKey.on_delete</span></code><a class="headerlink" href="#database-level-delete-options-for-foreignkey-on-delete" title="Link to this heading">¶</a></h3>
+<p><a class="reference internal" href="../ref/models/fields.html#django.db.models.ForeignKey.on_delete" title="django.db.models.ForeignKey.on_delete"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ForeignKey.on_delete</span></code></a> now supports database-level delete options:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../ref/models/fields.html#django.db.models.DB_CASCADE" title="django.db.models.DB_CASCADE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DB_CASCADE</span></code></a></p></li>
+<li><p><a class="reference internal" href="../ref/models/fields.html#django.db.models.DB_SET_NULL" title="django.db.models.DB_SET_NULL"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DB_SET_NULL</span></code></a></p></li>
+<li><p><a class="reference internal" href="../ref/models/fields.html#django.db.models.DB_SET_DEFAULT" title="django.db.models.DB_SET_DEFAULT"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DB_SET_DEFAULT</span></code></a></p></li>
+</ul>
+<p>These options handle deletion logic entirely within the database, using the SQL
+<code class="docutils literal notranslate"><span class="pre">ON</span> <span class="pre">DELETE</span></code> clause. They are thus more efficient than the existing
+Python-level options, as Django does not need to load objects before deleting
+them. As a consequence, the <a class="reference internal" href="../ref/models/fields.html#django.db.models.DB_CASCADE" title="django.db.models.DB_CASCADE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DB_CASCADE</span></code></a> option does
+not trigger the <code class="docutils literal notranslate"><span class="pre">pre_delete</span></code> or <code class="docutils literal notranslate"><span class="pre">post_delete</span></code> signals.</p>
+</section>
+<section id="s-mailers">
+<span id="mailers"></span><h3>Mailers<a class="headerlink" href="#mailers" title="Link to this heading">¶</a></h3>
+<p>The new <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> setting supports configuring multiple email backends
+with different options, similar to existing mechanisms for <a class="reference internal" href="../ref/settings.html#std-setting-CACHES"><code class="xref std std-setting docutils literal notranslate"><span class="pre">CACHES</span></code></a>,
+<a class="reference internal" href="../ref/settings.html#std-setting-DATABASES"><code class="xref std std-setting docutils literal notranslate"><span class="pre">DATABASES</span></code></a>, <a class="reference internal" href="../ref/settings.html#std-setting-STORAGES"><code class="xref std std-setting docutils literal notranslate"><span class="pre">STORAGES</span></code></a>, and <a class="reference internal" href="../ref/settings.html#std-setting-TASKS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">TASKS</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MAILERS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;BACKEND&quot;</span><span class="p">:</span> <span class="s2">&quot;django.core.mail.backends.smtp.EmailBackend&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;OPTIONS&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;host&quot;</span><span class="p">:</span> <span class="s2">&quot;smtp.example.com&quot;</span><span class="p">,</span> <span class="s2">&quot;use_tls&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;marketing&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;BACKEND&quot;</span><span class="p">:</span> <span class="s2">&quot;example.third.party.EmailBackend&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;OPTIONS&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="s2">&quot;africa-1&quot;</span><span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>You can select a mailer with the new <code class="docutils literal notranslate"><span class="pre">using</span></code> argument to <a class="reference internal" href="../topics/email.html#topic-email-sending"><span class="std std-ref">email sending</span></a> functions, or obtain an email backend instance with
+<a class="reference internal" href="../topics/email.html#django.core.mail.mailers" title="django.core.mail.mailers"><code class="xref py py-data docutils literal notranslate"><span class="pre">mail.mailers[alias]</span></code></a>. See
+<a class="reference internal" href="../topics/email.html"><span class="doc">Sending email</span></a> for more details.</p>
+<p><a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> is not yet enabled by default in existing projects. It will
+replace <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_BACKEND"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_BACKEND</span></code></a> and related <code class="docutils literal notranslate"><span class="pre">EMAIL_*</span></code> settings in Django
+7.0. Until then, the older settings will continue to work but will issue
+deprecation warnings: see the list of <a class="reference internal" href="#mailers-deprecations"><span class="std std-ref">email deprecations</span></a> below.</p>
+<p>You can opt into the new feature at any time before Django 2028; see
+<a class="reference internal" href="../howto/mailers-migration.html#migrating-to-mailers"><span class="std std-ref">Migrating email to mailers</span></a>. To ease the transition,
+<a class="reference internal" href="../topics/email.html#django.core.mail.mailers.default" title="django.core.mail.mailers.default"><code class="xref py py-data docutils literal notranslate"><span class="pre">mail.mailers[&quot;default&quot;]</span></code></a> works with
+either <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> or the deprecated <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_BACKEND"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_BACKEND</span></code></a> setting
+defined. The deprecated <a class="reference internal" href="../topics/email.html#django.core.mail.get_connection" title="django.core.mail.get_connection"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_connection()</span></code></a> function will
+also return an instance of the default mailer when <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> is
+defined.</p>
+</section>
+<section id="s-adopting-calendar-versioning">
+<span id="adopting-calendar-versioning"></span><h3>Adopting calendar versioning<a class="headerlink" href="#adopting-calendar-versioning" title="Link to this heading">¶</a></h3>
+<p>Following <a class="reference external" href="https://github.com/django/deps/blob/main/accepted/0020-annual-release-cycle.rst">DEP 20</a>, the releases previously planned as Django 7.0 and 7.1 are
+now Django 2028 and 2029. Accordingly, the deprecation warning classes are
+renamed to match the calendar version in which the features they mark are
+removed: <code class="docutils literal notranslate"><span class="pre">RemovedInDjango70Warning</span></code> becomes <code class="docutils literal notranslate"><span class="pre">RemovedInDjango2028Warning</span></code>.</p>
+</section>
+<section id="s-minor-features">
+<span id="minor-features"></span><h3>Minor features<a class="headerlink" href="#minor-features" title="Link to this heading">¶</a></h3>
+<section id="s-django-contrib-admin">
+<span id="django-contrib-admin"></span><h4><a class="reference internal" href="../ref/contrib/admin/index.html#module-django.contrib.admin" title="django.contrib.admin: Django's admin site."><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.admin</span></code></a><a class="headerlink" href="#django-contrib-admin" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>The admin site login view now redirects authenticated users to the next URL,
+if available, instead of always redirecting to the admin index page.</p></li>
+<li><p>The admin’s <code class="docutils literal notranslate"><span class="pre">FilteredSelectMultiple</span></code> widget now uses <code class="docutils literal notranslate"><span class="pre">&lt;optgroup&gt;</span></code>s to
+preserve <a class="reference internal" href="../ref/models/fields.html#field-choices-named-groups"><span class="std std-ref">named groups</span></a> (e.g.
+<code class="docutils literal notranslate"><span class="pre">choices=[(&quot;Group&quot;,</span> <span class="pre">[(&quot;1&quot;,</span> <span class="pre">&quot;Item&quot;)]),</span> <span class="pre">...]</span></code>).</p></li>
+<li><p>When <a class="reference internal" href="../ref/contrib/admin/index.html#django.contrib.admin.ModelAdmin.list_select_related" title="django.contrib.admin.ModelAdmin.list_select_related"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ModelAdmin.list_select_related</span></code></a> is <code class="docutils literal notranslate"><span class="pre">False</span></code> (the default),
+the change list now selects only the foreign key fields specified in
+<a class="reference internal" href="../ref/contrib/admin/index.html#django.contrib.admin.ModelAdmin.list_display" title="django.contrib.admin.ModelAdmin.list_display"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ModelAdmin.list_display</span></code></a>, rather than all foreign key fields. This
+should improve performance for models with many foreign key fields.</p></li>
+<li><p>The <a class="reference internal" href="../ref/contrib/admin/index.html#django.contrib.admin.ModelAdmin.delete_confirmation_max_display" title="django.contrib.admin.ModelAdmin.delete_confirmation_max_display"><code class="xref py py-attr docutils literal notranslate"><span class="pre">delete_confirmation_max_display</span></code></a>
+option allows customizing how many objects are displayed on admin delete
+confirmation pages and inline protected deletion errors before the remainder
+is truncated. The default is <code class="docutils literal notranslate"><span class="pre">None</span></code> (no truncation).</p></li>
+<li><p>In order to improve accessibility of the admin change forms:</p>
+<ul>
+<li><p>Form fields are now shown below their respective labels instead of next to
+them.</p></li>
+<li><p>Help text is now shown after the field label and before the field input.</p></li>
+<li><p>Validation errors are now shown after the help text and before the field
+input.</p></li>
+<li><p>Checkboxes are an exception to the above changes and continue to be
+displayed in their original layout.</p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="../ref/contrib/admin/index.html#django.contrib.admin.ModelAdmin.list_display" title="django.contrib.admin.ModelAdmin.list_display"><code class="xref py py-attr docutils literal notranslate"><span class="pre">list_display</span></code></a> now uses boolean icons
+for boolean fields on related models.</p></li>
+<li><p>The new <code class="docutils literal notranslate"><span class="pre">location</span></code> keyword argument of the
+<a class="reference internal" href="../ref/contrib/admin/actions.html#django.contrib.admin.action" title="django.contrib.admin.action"><code class="xref py py-func docutils literal notranslate"><span class="pre">action()</span></code></a> decorator specifies which admin views
+the action is available on. The action is available on the admin change list
+page by default. It can also be available on the admin change form. See
+<a class="reference internal" href="../ref/contrib/admin/actions.html#admin-action-availability"><span class="std std-ref">Controlling where actions are available</span></a> for details.</p></li>
+<li><p>The new <code class="docutils literal notranslate"><span class="pre">description_plural</span></code> keyword argument of the
+<a class="reference internal" href="../ref/contrib/admin/actions.html#django.contrib.admin.action" title="django.contrib.admin.action"><code class="xref py py-func docutils literal notranslate"><span class="pre">action()</span></code></a> decorator specifies a human-readable
+description for actions on the admin change list page. Defaults to the
+<code class="docutils literal notranslate"><span class="pre">description</span></code> value. This is useful when the action is available on both
+the admin change list and admin change form.</p></li>
+</ul>
+</section>
+<section id="s-django-contrib-auth">
+<span id="django-contrib-auth"></span><h4><a class="reference internal" href="../topics/auth/index.html#module-django.contrib.auth" title="django.contrib.auth: Django's authentication framework."><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.auth</span></code></a><a class="headerlink" href="#django-contrib-auth" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>The default iteration count for the PBKDF2 password hasher is increased from
+1,200,000 to 1,500,000.</p></li>
+<li><p><a class="reference internal" href="../ref/contrib/auth.html#django.contrib.auth.models.Permission.name" title="django.contrib.auth.models.Permission.name"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Permission.name</span></code></a> and <a class="reference internal" href="../ref/contrib/auth.html#django.contrib.auth.models.Permission.codename" title="django.contrib.auth.models.Permission.codename"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Permission.codename</span></code></a> values are now
+renamed when renaming models via a migration.</p></li>
+<li><p>The new <a class="reference internal" href="../ref/contrib/auth.html#django.contrib.auth.models.Permission.user_perm_str" title="django.contrib.auth.models.Permission.user_perm_str"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Permission.user_perm_str</span></code></a> property returns the string
+suitable to use with <a class="reference internal" href="../ref/contrib/auth.html#django.contrib.auth.models.User.has_perm" title="django.contrib.auth.models.User.has_perm"><code class="xref py py-meth docutils literal notranslate"><span class="pre">User.has_perm()</span></code></a>.</p></li>
+</ul>
+</section>
+<section id="s-django-contrib-gis">
+<span id="django-contrib-gis"></span><h4><a class="reference internal" href="../ref/contrib/gis/index.html#module-django.contrib.gis" title="django.contrib.gis: Geographic Information System (GIS) extensions for Django"><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.gis</span></code></a><a class="headerlink" href="#django-contrib-gis" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>The <a class="reference internal" href="../ref/contrib/gis/geoquerysets.html#std-fieldlookup-isempty"><code class="xref std std-lookup docutils literal notranslate"><span class="pre">isempty</span></code></a> lookup and
+<a class="reference internal" href="../ref/contrib/gis/functions.html#django.contrib.gis.db.models.functions.IsEmpty" title="django.contrib.gis.db.models.functions.IsEmpty"><code class="xref py py-class docutils literal notranslate"><span class="pre">IsEmpty()</span></code></a>
+database function are now supported on SpatiaLite.</p></li>
+<li><p>The new <a class="reference internal" href="../ref/contrib/gis/geoquerysets.html#std-fieldlookup-num_dimensions"><code class="xref std std-lookup docutils literal notranslate"><span class="pre">num_dimensions</span></code></a> lookup and <a class="reference internal" href="../ref/contrib/gis/functions.html#django.contrib.gis.db.models.functions.NumDimensions" title="django.contrib.gis.db.models.functions.NumDimensions"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumDimensions()</span></code></a> database function
+allow filtering geometries by the number of dimensions on PostGIS and
+SpatiaLite.</p></li>
+<li><p><a class="reference internal" href="../ref/contrib/gis/forms-api.html#django.contrib.gis.forms.widgets.OpenLayersWidget" title="django.contrib.gis.forms.widgets.OpenLayersWidget"><code class="xref py py-class docutils literal notranslate"><span class="pre">OpenLayersWidget</span></code></a> is now based on
+OpenLayers 10.9.0 (previously 7.2.2).</p></li>
+</ul>
+</section>
+<section id="s-django-contrib-postgres">
+<span id="django-contrib-postgres"></span><h4><a class="reference internal" href="../ref/contrib/postgres/index.html#module-django.contrib.postgres" title="django.contrib.postgres: PostgreSQL-specific fields and features"><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.postgres</span></code></a><a class="headerlink" href="#django-contrib-postgres" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p><a class="reference internal" href="../ref/django-admin.html#django-admin-inspectdb"><code class="xref std std-djadmin docutils literal notranslate"><span class="pre">inspectdb</span></code></a> now introspects
+<a class="reference internal" href="../ref/contrib/postgres/fields.html#django.contrib.postgres.fields.HStoreField" title="django.contrib.postgres.fields.HStoreField"><code class="xref py py-class docutils literal notranslate"><span class="pre">HStoreField</span></code></a> when <code class="docutils literal notranslate"><span class="pre">psycopg</span></code> 3.2+ is
+installed and <code class="docutils literal notranslate"><span class="pre">django.contrib.postgres</span></code> is in <a class="reference internal" href="../ref/settings.html#std-setting-INSTALLED_APPS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">INSTALLED_APPS</span></code></a>.</p></li>
+<li><p><a class="reference internal" href="../ref/contrib/postgres/constraints.html#django.contrib.postgres.constraints.ExclusionConstraint" title="django.contrib.postgres.constraints.ExclusionConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExclusionConstraint</span></code></a> now
+supports the Hash index type.</p></li>
+</ul>
+</section>
+<section id="s-django-contrib-sessions">
+<span id="django-contrib-sessions"></span><h4><a class="reference internal" href="../topics/http/sessions.html#module-django.contrib.sessions" title="django.contrib.sessions: Provides session management for Django projects."><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.sessions</span></code></a><a class="headerlink" href="#django-contrib-sessions" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p><a class="reference internal" href="../topics/http/sessions.html#django.contrib.sessions.backends.base.SessionBase" title="django.contrib.sessions.backends.base.SessionBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">SessionBase</span></code></a> now supports
+boolean evaluation via
+<a class="reference internal" href="../topics/http/sessions.html#django.contrib.sessions.backends.base.SessionBase.__bool__" title="django.contrib.sessions.backends.base.SessionBase.__bool__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__bool__()</span></code></a>.</p></li>
+</ul>
+</section>
+<section id="s-csp">
+<span id="csp"></span><h4>CSP<a class="headerlink" href="#csp" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>The new <a class="reference internal" href="../ref/templates/builtins.html#std-templatetag-csp_nonce_attr"><code class="xref std std-ttag docutils literal notranslate"><span class="pre">csp_nonce_attr</span></code></a> template tag renders the CSP nonce attribute
+on <code class="docutils literal notranslate"><span class="pre">&lt;script&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">&lt;link&gt;</span></code> elements, or renders a
+<a class="reference internal" href="../topics/forms/media.html#django.forms.Media" title="django.forms.Media"><code class="xref py py-class docutils literal notranslate"><span class="pre">Media</span></code></a> object’s assets with the nonce applied, when the
+<a class="reference internal" href="../ref/templates/api.html#django.template.context_processors.csp" title="django.template.context_processors.csp"><code class="xref py py-func docutils literal notranslate"><span class="pre">csp()</span></code></a> context processor is
+configured. See <a class="reference internal" href="../ref/csp.html#csp-nonce"><span class="std std-ref">Nonce usage</span></a> for details.</p></li>
+<li><p>A new <code class="docutils literal notranslate"><span class="pre">security.W027</span></code> system check warns when
+<a class="reference internal" href="../ref/middleware.html#django.middleware.csp.ContentSecurityPolicyMiddleware" title="django.middleware.csp.ContentSecurityPolicyMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">ContentSecurityPolicyMiddleware</span></code></a> is enabled
+with <code class="docutils literal notranslate"><span class="pre">CSP.NONCE</span></code> in a CSP policy but
+<code class="docutils literal notranslate"><span class="pre">django.template.context_processors.csp</span></code> is not configured.</p></li>
+<li><p>CSP nonce attributes are now added on <code class="docutils literal notranslate"><span class="pre">&lt;script&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;style&gt;</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">&lt;link&gt;</span></code> elements in admin templates and all built-in templates when the
+<a class="reference internal" href="../ref/templates/api.html#django.template.context_processors.csp" title="django.template.context_processors.csp"><code class="xref py py-func docutils literal notranslate"><span class="pre">csp()</span></code></a> context processor is
+configured. See <a class="reference internal" href="../howto/csp.html#csp-nonce-config"><span class="std std-ref">Nonce config</span></a> for setup instructions.</p></li>
+</ul>
+</section>
+<section id="s-email">
+<span id="email"></span><h4>Email<a class="headerlink" href="#email" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>A new <code class="docutils literal notranslate"><span class="pre">mail.E001</span></code> deployment-only system check prevents using one of
+Django’s email backends that is not intended for production use in the
+<code class="docutils literal notranslate"><span class="pre">'default'</span></code> <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> entry.</p></li>
+<li><p>A new <code class="docutils literal notranslate"><span class="pre">mail.W001</span></code> system check warns when <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> is defined but
+does not include a <code class="docutils literal notranslate"><span class="pre">'default'</span></code> entry.</p></li>
+</ul>
+</section>
+<section id="s-forms">
+<span id="forms"></span><h4>Forms<a class="headerlink" href="#forms" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>The new asset object <a class="reference internal" href="../topics/forms/media.html#django.forms.Stylesheet" title="django.forms.Stylesheet"><code class="xref py py-class docutils literal notranslate"><span class="pre">Stylesheet</span></code></a> is available for
+adding custom HTML-attributes to stylesheet links in form media. See
+<a class="reference internal" href="../topics/forms/media.html#form-media-asset-objects"><span class="std std-ref">paths as objects</span></a> for more details.</p></li>
+<li><p>The new constant <code class="docutils literal notranslate"><span class="pre">django.db.models.fields.BLANK_CHOICE_LABEL</span></code> defines a
+more accessible and translatable default label for the blank choice in
+forms, which is appended to most <code class="docutils literal notranslate"><span class="pre">choices</span></code> lists. The transitional setting
+<a class="reference internal" href="../ref/settings.html#std-setting-USE_BLANK_CHOICE_DASH"><code class="xref std std-setting docutils literal notranslate"><span class="pre">USE_BLANK_CHOICE_DASH</span></code></a> allows you to revert back to the old
+default label.</p></li>
+<li><p><a class="reference internal" href="../ref/forms/fields.html#django.forms.FilePathField" title="django.forms.FilePathField"><code class="xref py py-class docutils literal notranslate"><span class="pre">FilePathField</span></code></a> now provides a
+<a class="reference internal" href="../ref/forms/fields.html#django.forms.FilePathField.set_choices" title="django.forms.FilePathField.set_choices"><code class="xref py py-meth docutils literal notranslate"><span class="pre">set_choices()</span></code></a> method to scan the
+directory at <a class="reference internal" href="../ref/forms/fields.html#django.forms.FilePathField.path" title="django.forms.FilePathField.path"><code class="xref py py-attr docutils literal notranslate"><span class="pre">path</span></code></a> and refresh the
+field’s choices. This allows per-request refreshing when called in a form’s
+<code class="docutils literal notranslate"><span class="pre">__init__()</span></code>.</p></li>
+</ul>
+</section>
+<section id="s-generic-views">
+<span id="generic-views"></span><h4>Generic Views<a class="headerlink" href="#generic-views" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>The new <a class="reference internal" href="../ref/class-based-views/base.html#django.views.generic.base.RedirectView.preserve_request" title="django.views.generic.base.RedirectView.preserve_request"><code class="xref py py-attr docutils literal notranslate"><span class="pre">RedirectView.preserve_request</span></code></a> attribute allows preserving
+the HTTP method and body during redirects, using 307/308 status codes instead
+of 302/301.</p></li>
+</ul>
+</section>
+<section id="s-management-commands">
+<span id="management-commands"></span><h4>Management Commands<a class="headerlink" href="#management-commands" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>Management commands now set <a class="reference external" href="https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArgumentParser</span></code></a>'s
+<code class="docutils literal notranslate"><span class="pre">suggest_on_error</span></code> argument to <code class="docutils literal notranslate"><span class="pre">True</span></code> by default on Python 3.14, enabling
+suggestions for incorrectly typed subcommand names and argument choices.</p></li>
+<li><p>The <a class="reference internal" href="../ref/django-admin.html#django-admin-loaddata"><code class="xref std std-djadmin docutils literal notranslate"><span class="pre">loaddata</span></code></a> command now calls
+<a class="reference internal" href="../ref/signals.html#django.db.models.signals.m2m_changed" title="django.db.models.signals.m2m_changed"><code class="xref py py-data docutils literal notranslate"><span class="pre">m2m_changed</span></code></a> signals with <code class="docutils literal notranslate"><span class="pre">raw=True</span></code> when
+loading fixtures.</p></li>
+<li><p>The <a class="reference internal" href="../ref/django-admin.html#django-admin-sendtestemail"><code class="xref std std-djadmin docutils literal notranslate"><span class="pre">sendtestemail</span></code></a> command now supports a <a class="reference internal" href="../ref/django-admin.html#cmdoption-sendtestemail-using"><code class="xref std std-option docutils literal notranslate"><span class="pre">--using</span></code></a> option to specify the <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> alias.</p></li>
+</ul>
+</section>
+<section id="s-models">
+<span id="models"></span><h4>Models<a class="headerlink" href="#models" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p><a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.in_bulk" title="django.db.models.query.QuerySet.in_bulk"><code class="xref py py-meth docutils literal notranslate"><span class="pre">QuerySet.in_bulk()</span></code></a> now supports chaining after
+<a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.values" title="django.db.models.query.QuerySet.values"><code class="xref py py-meth docutils literal notranslate"><span class="pre">QuerySet.values()</span></code></a> and <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.values_list" title="django.db.models.query.QuerySet.values_list"><code class="xref py py-meth docutils literal notranslate"><span class="pre">QuerySet.values_list()</span></code></a>.</p></li>
+<li><p>The new <a class="reference internal" href="../ref/models/expressions.html#django.db.models.JSONNull" title="django.db.models.JSONNull"><code class="xref py py-class docutils literal notranslate"><span class="pre">JSONNull</span></code></a> expression provides an explicit
+way to represent the JSON scalar <code class="docutils literal notranslate"><span class="pre">null</span></code>. It can be used when saving a
+top-level <a class="reference internal" href="../ref/models/fields.html#django.db.models.JSONField" title="django.db.models.JSONField"><code class="xref py py-class docutils literal notranslate"><span class="pre">JSONField</span></code></a> value, or querying for
+top-level or nested JSON <code class="docutils literal notranslate"><span class="pre">null</span></code> values. See
+<a class="reference internal" href="../topics/db/queries.html#storing-and-querying-for-none"><span class="std std-ref">Storing and querying for None</span></a> for usage examples and some caveats.</p></li>
+<li><p><a class="reference internal" href="../ref/models/fields.html#django.db.models.DecimalField.max_digits" title="django.db.models.DecimalField.max_digits"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DecimalField.max_digits</span></code></a>
+and <a class="reference internal" href="../ref/models/fields.html#django.db.models.DecimalField.decimal_places" title="django.db.models.DecimalField.decimal_places"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DecimalField.decimal_places</span></code></a> are no longer required to be
+set on Oracle, PostgreSQL, and SQLite.</p></li>
+<li><p><a class="reference internal" href="../ref/models/fields.html#django.db.models.JSONField" title="django.db.models.JSONField"><code class="xref py py-class docutils literal notranslate"><span class="pre">JSONField</span></code></a> now supports
+<a class="reference internal" href="../topics/db/queries.html#key-index-and-path-transforms"><span class="std std-ref">negative array indexing</span></a> on Oracle
+21c+.</p></li>
+<li><p>The new <a class="reference internal" href="../ref/models/database-functions.html#django.db.models.functions.UUID4" title="django.db.models.functions.UUID4"><code class="xref py py-class docutils literal notranslate"><span class="pre">UUID4</span></code></a> and
+<a class="reference internal" href="../ref/models/database-functions.html#django.db.models.functions.UUID7" title="django.db.models.functions.UUID7"><code class="xref py py-class docutils literal notranslate"><span class="pre">UUID7</span></code></a> database functions were added.</p></li>
+<li><p><a class="reference internal" href="../ref/models/fields.html#django.db.models.GeneratedField" title="django.db.models.GeneratedField"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeneratedField</span></code></a> now supports virtual columns
+(<a class="reference internal" href="../ref/models/fields.html#django.db.models.GeneratedField.db_persist" title="django.db.models.GeneratedField.db_persist"><code class="xref py py-attr docutils literal notranslate"><span class="pre">db_persist</span></code></a> set to <code class="docutils literal notranslate"><span class="pre">False</span></code>) on
+Postgres 18+ and stored columns
+(<a class="reference internal" href="../ref/models/fields.html#django.db.models.GeneratedField.db_persist" title="django.db.models.GeneratedField.db_persist"><code class="xref py py-attr docutils literal notranslate"><span class="pre">db_persist</span></code></a> set to <code class="docutils literal notranslate"><span class="pre">True</span></code>) on
+Oracle 23ai/26ai (23.7+).</p></li>
+<li><p>The <a class="reference internal" href="../ref/signals.html#django.db.models.signals.m2m_changed" title="django.db.models.signals.m2m_changed"><code class="xref py py-data docutils literal notranslate"><span class="pre">m2m_changed</span></code></a> signal now receives a
+<code class="docutils literal notranslate"><span class="pre">raw</span></code> argument.</p></li>
+<li><p><a class="reference internal" href="../ref/models/querysets.html#django.db.models.StringAgg" title="django.db.models.StringAgg"><code class="xref py py-class docutils literal notranslate"><span class="pre">StringAgg</span></code></a> now supports <code class="docutils literal notranslate"><span class="pre">distinct=True</span></code> on SQLite
+when using the default delimiter <code class="docutils literal notranslate"><span class="pre">Value(&quot;,&quot;)</span></code> only.</p></li>
+<li><p>The new <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.totally_ordered" title="django.db.models.query.QuerySet.totally_ordered"><code class="xref py py-attr docutils literal notranslate"><span class="pre">QuerySet.totally_ordered</span></code></a> property returns <code class="docutils literal notranslate"><span class="pre">True</span></code> if the
+<a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet" title="django.db.models.query.QuerySet"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuerySet</span></code></a> is ordered and the ordering is
+deterministic.</p></li>
+<li><p>The new <a class="reference internal" href="../ref/models/querysets.html#django.db.models.BitAnd" title="django.db.models.BitAnd"><code class="xref py py-class docutils literal notranslate"><span class="pre">BitAnd</span></code></a>, <a class="reference internal" href="../ref/models/querysets.html#django.db.models.BitOr" title="django.db.models.BitOr"><code class="xref py py-class docutils literal notranslate"><span class="pre">BitOr</span></code></a>,
+and <a class="reference internal" href="../ref/models/querysets.html#django.db.models.BitXor" title="django.db.models.BitXor"><code class="xref py py-class docutils literal notranslate"><span class="pre">BitXor</span></code></a> aggregates return the bitwise <code class="docutils literal notranslate"><span class="pre">AND</span></code>,
+<code class="docutils literal notranslate"><span class="pre">OR</span></code>, <code class="docutils literal notranslate"><span class="pre">XOR</span></code>, respectively. These aggregates were previously included only
+in <code class="docutils literal notranslate"><span class="pre">contrib.postgres</span></code>.</p></li>
+<li><p><a class="reference internal" href="../ref/models/fields.html#django.db.models.BinaryField" title="django.db.models.BinaryField"><code class="xref py py-class docutils literal notranslate"><span class="pre">django.db.models.BinaryField</span></code></a> now validates Base64 input strictly.
+Invalid Base64 strings now raise <code class="docutils literal notranslate"><span class="pre">ValidationError</span></code> instead of being
+silently accepted.</p></li>
+</ul>
+</section>
+<section id="s-requests-and-responses">
+<span id="requests-and-responses"></span><h4>Requests and Responses<a class="headerlink" href="#requests-and-responses" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p><a class="reference internal" href="../ref/request-response.html#django.http.HttpRequest.multipart_parser_class" title="django.http.HttpRequest.multipart_parser_class"><code class="xref py py-attr docutils literal notranslate"><span class="pre">HttpRequest.multipart_parser_class</span></code></a>
+can now be customized to use a different multipart parser class.</p></li>
+<li><p><a class="reference internal" href="../ref/request-response.html#django.http.HttpResponseRedirect" title="django.http.HttpResponseRedirect"><code class="xref py py-class docutils literal notranslate"><span class="pre">HttpResponseRedirect</span></code></a> (and its subclasses), as well as
+the <a class="reference internal" href="../topics/http/shortcuts.html#django.shortcuts.redirect" title="django.shortcuts.redirect"><code class="xref py py-func docutils literal notranslate"><span class="pre">redirect()</span></code></a> shortcut, now accept a <code class="docutils literal notranslate"><span class="pre">max_length</span></code>
+parameter to override the default maximum URL length limit.</p></li>
+</ul>
+</section>
+<section id="s-security">
+<span id="security"></span><h4>Security<a class="headerlink" href="#security" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>Signed cookies now use an unambiguous salt derivation by default. Set
+<a class="reference internal" href="../ref/settings.html#std-setting-SIGNED_COOKIE_LEGACY_SALT_FALLBACK"><code class="xref std std-setting docutils literal notranslate"><span class="pre">SIGNED_COOKIE_LEGACY_SALT_FALLBACK</span></code></a> to <code class="docutils literal notranslate"><span class="pre">True</span></code> to continue
+accepting legacy signed cookies.</p></li>
+</ul>
+</section>
+<section id="s-serialization">
+<span id="serialization"></span><h4>Serialization<a class="headerlink" href="#serialization" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>Subclasses of models defining the <code class="docutils literal notranslate"><span class="pre">natural_key()</span></code> method can now opt out of
+natural key serialization by overriding the method to return an empty tuple:
+<code class="docutils literal notranslate"><span class="pre">()</span></code>. This ensures primary keys are serialized when using
+<a class="reference internal" href="../ref/django-admin.html#cmdoption-dumpdata-natural-primary"><code class="xref std std-option docutils literal notranslate"><span class="pre">dumpdata</span> <span class="pre">--natural-primary</span></code></a>.</p></li>
+<li><p>The XML deserializer now raises
+<a class="reference internal" href="../ref/exceptions.html#django.core.exceptions.SuspiciousOperation" title="django.core.exceptions.SuspiciousOperation"><code class="xref py py-exc docutils literal notranslate"><span class="pre">SuspiciousOperation</span></code></a> when it encounters
+unexpected nested tags.</p></li>
+</ul>
+</section>
+<section id="s-tasks">
+<span id="tasks"></span><h4>Tasks<a class="headerlink" href="#tasks" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>The <a class="reference internal" href="../ref/tasks.html#django.tasks.task" title="django.tasks.task"><code class="xref py py-func docutils literal notranslate"><span class="pre">task()</span></code></a> decorator now accepts <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code>, which are
+forwarded to the backend’s
+<a class="reference internal" href="../ref/tasks.html#django.tasks.backends.base.BaseTaskBackend.task_class" title="django.tasks.backends.base.BaseTaskBackend.task_class"><code class="xref py py-attr docutils literal notranslate"><span class="pre">task_class</span></code></a>.</p></li>
+<li><p><a class="reference internal" href="../ref/tasks.html#django.tasks.Task" title="django.tasks.Task"><code class="xref py py-class docutils literal notranslate"><span class="pre">Task</span></code></a> and <a class="reference internal" href="../ref/tasks.html#django.tasks.TaskResult" title="django.tasks.TaskResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">TaskResult</span></code></a> instances
+can now be pickled and unpickled.</p></li>
+</ul>
+</section>
+<section id="s-tests">
+<span id="tests"></span><h4>Tests<a class="headerlink" href="#tests" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p><a class="reference internal" href="../topics/testing/tools.html#django.test.SimpleTestCase.assertContains" title="django.test.SimpleTestCase.assertContains"><code class="xref py py-meth docutils literal notranslate"><span class="pre">assertContains()</span></code></a> and
+<a class="reference internal" href="../topics/testing/tools.html#django.test.SimpleTestCase.assertNotContains" title="django.test.SimpleTestCase.assertNotContains"><code class="xref py py-meth docutils literal notranslate"><span class="pre">assertNotContains()</span></code></a> can now be called
+multiple times on the same <a class="reference internal" href="../ref/request-response.html#django.http.StreamingHttpResponse" title="django.http.StreamingHttpResponse"><code class="xref py py-class docutils literal notranslate"><span class="pre">StreamingHttpResponse</span></code></a>.
+Previously, they would consume the streaming response’s content, causing
+subsequent calls to fail.</p></li>
+</ul>
+</section>
+<section id="s-utilities">
+<span id="utilities"></span><h4>Utilities<a class="headerlink" href="#utilities" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p><a class="reference internal" href="../ref/utils.html#django.utils.dateparse.parse_duration" title="django.utils.dateparse.parse_duration"><code class="xref py py-func docutils literal notranslate"><span class="pre">parse_duration()</span></code></a> now supports ISO 8601
+time periods expressed in weeks (<code class="docutils literal notranslate"><span class="pre">PnW</span></code>).</p></li>
+</ul>
+</section>
+</section>
+</section>
+<section id="s-backwards-incompatible-changes-in-6-1">
+<span id="s-backwards-incompatible-6-1"></span><span id="backwards-incompatible-changes-in-6-1"></span><span id="backwards-incompatible-6-1"></span><h2>Backwards incompatible changes in 6.1<a class="headerlink" href="#backwards-incompatible-changes-in-6-1" title="Link to this heading">¶</a></h2>
+<section id="s-database-backend-api">
+<span id="database-backend-api"></span><h3>Database backend API<a class="headerlink" href="#database-backend-api" title="Link to this heading">¶</a></h3>
+<p>This section describes changes that may be needed in third-party database
+backends.</p>
+<ul class="simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">DatabaseOperations.adapt_durationfield_value()</span></code> hook is added. If the
+database has native support for <code class="docutils literal notranslate"><span class="pre">DurationField</span></code>, override this method to
+simply return the value.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">DatabaseIntrospection.get_relations()</span></code> should now return a dictionary
+with 3-tuples containing (<code class="docutils literal notranslate"><span class="pre">field_name_other_table</span></code>, <code class="docutils literal notranslate"><span class="pre">other_table</span></code>,
+<code class="docutils literal notranslate"><span class="pre">db_on_delete</span></code>) as values. <code class="docutils literal notranslate"><span class="pre">db_on_delete</span></code> is one of the database-level
+delete options e.g. <a class="reference internal" href="../ref/models/fields.html#django.db.models.DB_CASCADE" title="django.db.models.DB_CASCADE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DB_CASCADE</span></code></a>.</p></li>
+<li><p>Set the new <code class="docutils literal notranslate"><span class="pre">DatabaseFeatures.supports_inspectdb</span></code> attribute to <code class="docutils literal notranslate"><span class="pre">False</span></code>
+if the management command isn’t supported.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">DatabaseFeatures.prohibits_dollar_signs_in_column_aliases</span></code> feature
+flag is removed.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">DatabaseOperations.binary_placeholder_sql()</span></code> method now expects a
+query compiler as an extra positional argument and should return a
+two-elements tuple composed of an SQL format string and a tuple of associated
+parameters.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">BaseSpatialOperations.get_geom_placeholder()</span></code> method is renamed to
+<code class="docutils literal notranslate"><span class="pre">get_geom_placeholder_sql</span></code> and is expected to return a two-elements tuple
+composed of an SQL format string and a tuple of associated parameters.</p></li>
+<li><p>Set the new <code class="docutils literal notranslate"><span class="pre">DatabaseFeatures.supports_bit_aggregations</span></code> attribute to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> if the database doesn’t support bitwise aggregations.</p></li>
+</ul>
+</section>
+<section id="s-id1">
+<span id="id1"></span><h3><a class="reference internal" href="../ref/contrib/admin/index.html#module-django.contrib.admin" title="django.contrib.admin: Django's admin site."><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.admin</span></code></a><a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">wide</span></code> class is removed, as it was made obsolete by the new layout.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">object-tools</span></code> block is hoisted out of the <code class="docutils literal notranslate"><span class="pre">content</span></code> block in forms.</p></li>
+<li><p>The undocumented <code class="docutils literal notranslate"><span class="pre">InclusionAdminNode.__init__()</span></code> now takes the template tag
+<code class="docutils literal notranslate"><span class="pre">name</span></code> as the first positional argument.</p></li>
+<li><p>The undocumented <code class="docutils literal notranslate"><span class="pre">ChangeList.has_related_field_in_list_display()</span></code> method
+has been replaced with <code class="docutils literal notranslate"><span class="pre">ChangeList.get_select_related_fields()</span></code>.</p></li>
+</ul>
+</section>
+<section id="s-id2">
+<span id="id2"></span><h3><a class="reference internal" href="../topics/auth/index.html#module-django.contrib.auth" title="django.contrib.auth: Django's authentication framework."><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.auth</span></code></a><a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Under ASGI, <a class="reference internal" href="../ref/middleware.html#django.contrib.auth.middleware.RemoteUserMiddleware" title="django.contrib.auth.middleware.RemoteUserMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">RemoteUserMiddleware</span></code></a> no
+longer prefixes <code class="docutils literal notranslate"><span class="pre">HTTP_</span></code> when looking up custom values in <code class="docutils literal notranslate"><span class="pre">request.META</span></code>.
+For example, to send <code class="docutils literal notranslate"><span class="pre">-H</span> <span class="pre">&quot;AuthUser:</span> <span class="pre">...&quot;</span></code>, the <code class="docutils literal notranslate"><span class="pre">header</span></code> attribute should
+be <code class="docutils literal notranslate"><span class="pre">HTTP_AUTHUSER</span></code>. This restores the behavior prior to Django 5.2. (The
+default value of <code class="docutils literal notranslate"><span class="pre">REMOTE_USER</span></code> is not affected.)</p></li>
+</ul>
+</section>
+<section id="s-id3">
+<span id="id3"></span><h3><a class="reference internal" href="../ref/contrib/gis/index.html#module-django.contrib.gis" title="django.contrib.gis: Geographic Information System (GIS) extensions for Django"><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.gis</span></code></a><a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Support for PostGIS 3.1 is removed.</p></li>
+<li><p>Support for GEOS 3.8 and 3.9 is removed.</p></li>
+<li><p>Support for GDAL 3.1 and 3.2 is removed.</p></li>
+</ul>
+</section>
+<section id="s-id4">
+<span id="id4"></span><h3><a class="reference internal" href="../ref/contrib/postgres/index.html#module-django.contrib.postgres" title="django.contrib.postgres: PostgreSQL-specific fields and features"><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.postgres</span></code></a><a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Top-level elements set to <code class="docutils literal notranslate"><span class="pre">None</span></code> in an
+<a class="reference internal" href="../ref/contrib/postgres/fields.html#django.contrib.postgres.fields.ArrayField" title="django.contrib.postgres.fields.ArrayField"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArrayField</span></code></a> with a
+<a class="reference internal" href="../ref/models/fields.html#django.db.models.JSONField" title="django.db.models.JSONField"><code class="xref py py-class docutils literal notranslate"><span class="pre">JSONField</span></code></a> base field are now saved as SQL <code class="docutils literal notranslate"><span class="pre">NULL</span></code>
+instead of the JSON <code class="docutils literal notranslate"><span class="pre">null</span></code> primitive. This matches the behavior of a
+standalone <a class="reference internal" href="../ref/models/fields.html#django.db.models.JSONField" title="django.db.models.JSONField"><code class="xref py py-class docutils literal notranslate"><span class="pre">JSONField</span></code></a> when storing <code class="docutils literal notranslate"><span class="pre">None</span></code> values.</p></li>
+</ul>
+</section>
+<section id="s-id5">
+<span id="id5"></span><h3>Email<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Providing <code class="docutils literal notranslate"><span class="pre">fail_silently=True</span></code>, <code class="docutils literal notranslate"><span class="pre">auth_user</span></code>, or <code class="docutils literal notranslate"><span class="pre">auth_password</span></code> to mail
+sending functions (such as <a class="reference internal" href="../topics/email.html#django.core.mail.send_mail" title="django.core.mail.send_mail"><code class="xref py py-func docutils literal notranslate"><span class="pre">send_mail()</span></code></a>) while also
+providing a <code class="docutils literal notranslate"><span class="pre">connection</span></code> now raises a <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>.</p></li>
+<li><p>The undocumented <code class="docutils literal notranslate"><span class="pre">EmailMessage.get_connection()</span></code> method is no longer used.
+Defining it in a subclass or trying to call it now causes an error.</p></li>
+<li><p><a class="reference internal" href="../topics/email.html#django.core.mail.EmailMessage.send" title="django.core.mail.EmailMessage.send"><code class="xref py py-meth docutils literal notranslate"><span class="pre">EmailMessage.send()</span></code></a> no longer sets the <code class="docutils literal notranslate"><span class="pre">connection</span></code> property on the
+<code class="docutils literal notranslate"><span class="pre">EmailMessage</span></code>. (This behavior was never documented. The <code class="docutils literal notranslate"><span class="pre">send()</span></code> method
+will still <em>use</em> a <code class="docutils literal notranslate"><span class="pre">connection</span></code> that is set on the message before sending.)</p></li>
+<li><p><a class="reference internal" href="../topics/email.html#django.core.mail.EmailMessage.message" title="django.core.mail.EmailMessage.message"><code class="xref py py-meth docutils literal notranslate"><span class="pre">EmailMessage.message()</span></code></a> now raises a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if <code class="docutils literal notranslate"><span class="pre">Bcc</span></code> is
+included in the <code class="docutils literal notranslate"><span class="pre">headers</span></code> argument or <code class="docutils literal notranslate"><span class="pre">extra_headers</span></code> attribute. Use the
+<code class="docutils literal notranslate"><span class="pre">bcc</span></code> argument instead.</p></li>
+</ul>
+</section>
+<section id="s-id6">
+<span id="id6"></span><h3>Models<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>The <a class="reference internal" href="../ref/models/querysets.html#std-fieldlookup-iexact"><code class="xref std std-lookup docutils literal notranslate"><span class="pre">iexact=None</span></code></a> lookup on
+<a class="reference internal" href="../ref/models/fields.html#django.db.models.JSONField" title="django.db.models.JSONField"><code class="xref py py-class docutils literal notranslate"><span class="pre">JSONField</span></code></a> key transforms now matches JSON
+<code class="docutils literal notranslate"><span class="pre">null</span></code>, to match the behavior of <a class="reference internal" href="../ref/models/querysets.html#std-fieldlookup-exact"><code class="xref std std-lookup docutils literal notranslate"><span class="pre">exact=None</span></code></a> on key
+transforms. Previously, it was interpreted as an <a class="reference internal" href="../ref/models/querysets.html#std-fieldlookup-isnull"><code class="xref std std-lookup docutils literal notranslate"><span class="pre">isnull</span></code></a> lookup.</p></li>
+<li><p><a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.first" title="django.db.models.query.QuerySet.first"><code class="xref py py-meth docutils literal notranslate"><span class="pre">first()</span></code></a> and <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.last" title="django.db.models.query.QuerySet.last"><code class="xref py py-meth docutils literal notranslate"><span class="pre">last()</span></code></a> no longer order by the
+primary key when a <code class="docutils literal notranslate"><span class="pre">QuerySet</span></code>’s ordering has been forcibly cleared by
+calling <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.order_by" title="django.db.models.query.QuerySet.order_by"><code class="xref py py-meth docutils literal notranslate"><span class="pre">order_by()</span></code></a> with no arguments.</p></li>
+<li><p>As default model ordering is now applied to combined querysets,
+<a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.union" title="django.db.models.query.QuerySet.union"><code class="xref py py-meth docutils literal notranslate"><span class="pre">union()</span></code></a>, <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.difference" title="django.db.models.query.QuerySet.difference"><code class="xref py py-meth docutils literal notranslate"><span class="pre">difference()</span></code></a>, and
+<a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.intersection" title="django.db.models.query.QuerySet.intersection"><code class="xref py py-meth docutils literal notranslate"><span class="pre">intersection()</span></code></a> raise <code class="docutils literal notranslate"><span class="pre">DatabaseError</span></code> when a field in
+<a class="reference internal" href="../ref/models/options.html#django.db.models.Options.ordering" title="django.db.models.Options.ordering"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Options.ordering</span></code></a> isn’t selected by <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.values" title="django.db.models.query.QuerySet.values"><code class="xref py py-meth docutils literal notranslate"><span class="pre">values()</span></code></a> or
+<a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.values_list" title="django.db.models.query.QuerySet.values_list"><code class="xref py py-meth docutils literal notranslate"><span class="pre">values_list()</span></code></a>. Call <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.order_by" title="django.db.models.query.QuerySet.order_by"><code class="xref py py-meth docutils literal notranslate"><span class="pre">order_by()</span></code></a> without
+arguments after combining to clear the default ordering.</p></li>
+<li><p>SQL <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> aliases originating from <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.annotate" title="django.db.models.query.QuerySet.annotate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">QuerySet.annotate()</span></code></a>
+calls as well as table and <code class="docutils literal notranslate"><span class="pre">JOIN</span></code> aliases are now systematically quoted to
+prevent special character collisions. Because quoted aliases are
+case-sensitive, <em>raw</em> SQL references to aliases mixing case, such as when
+using <a class="reference internal" href="../ref/models/expressions.html#django.db.models.expressions.RawSQL" title="django.db.models.expressions.RawSQL"><code class="xref py py-class docutils literal notranslate"><span class="pre">RawSQL</span></code></a>, might have to be adjusted to also make use of
+quoting.</p></li>
+<li><p><a class="reference internal" href="../ref/models/instances.html#django.db.models.Model._is_pk_set" title="django.db.models.Model._is_pk_set"><code class="xref py py-meth docutils literal notranslate"><span class="pre">_is_pk_set()</span></code></a> now returns <code class="docutils literal notranslate"><span class="pre">False</span></code> for
+<code class="docutils literal notranslate"><span class="pre">DatabaseDefault</span></code> values on unsaved instances.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fetch_mode=None</span></code> is added to the signature of
+<a class="reference internal" href="../ref/models/instances.html#django.db.models.Model.from_db" title="django.db.models.Model.from_db"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_db()</span></code></a>.</p></li>
+</ul>
+</section>
+<section id="s-system-checks">
+<span id="system-checks"></span><h3>System checks<a class="headerlink" href="#system-checks" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>The <a class="reference internal" href="../ref/django-admin.html#django-admin-check"><code class="xref std std-djadmin docutils literal notranslate"><span class="pre">check</span></code></a> management command now supplies all <code class="docutils literal notranslate"><span class="pre">databases</span></code> if not
+specified. Callers should be prepared for databases to be accessed.</p></li>
+</ul>
+</section>
+<section id="s-dropped-support-for-postgresql-14">
+<span id="dropped-support-for-postgresql-14"></span><h3>Dropped support for PostgreSQL 14<a class="headerlink" href="#dropped-support-for-postgresql-14" title="Link to this heading">¶</a></h3>
+<p>Upstream support for PostgreSQL 14 ends in November 2026. Django 6.1 supports
+PostgreSQL 15 and higher.</p>
+</section>
+<section id="s-dropped-support-for-mysql-8-4">
+<span id="dropped-support-for-mysql-8-4"></span><h3>Dropped support for MySQL &lt; 8.4<a class="headerlink" href="#dropped-support-for-mysql-8-4" title="Link to this heading">¶</a></h3>
+<p>Upstream support for MySQL 8.0 ends in April 2026, and MySQL 8.1-8.3 are
+short-term innovation releases. Django 6.1 supports MySQL 8.4 and higher.</p>
+</section>
+<section id="s-dropped-support-for-mariadb-10-11">
+<span id="dropped-support-for-mariadb-10-11"></span><h3>Dropped support for MariaDB &lt; 10.11<a class="headerlink" href="#dropped-support-for-mariadb-10-11" title="Link to this heading">¶</a></h3>
+<p>Upstream support for MariaDB 10.6 ends in July 2026, and MariaDB 10.7-10.10 are
+short-term maintenance releases. Django 6.1 supports MariaDB 10.11 and higher.</p>
+</section>
+<section id="s-miscellaneous">
+<span id="miscellaneous"></span><h3>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>The minimum supported version of SQLite is increased from 3.31.0 to 3.37.0.</p></li>
+<li><p>The default value of the transitional setting
+<a class="reference internal" href="../ref/settings.html#std-setting-SIGNED_COOKIE_LEGACY_SALT_FALLBACK"><code class="xref std std-setting docutils literal notranslate"><span class="pre">SIGNED_COOKIE_LEGACY_SALT_FALLBACK</span></code></a> is now <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p>In cases where cached pages or template fragments varied on arguments, e.g.
+<a class="reference internal" href="../topics/cache.html#using-vary-headers"><span class="std std-ref">vary headers</span></a> for
+<a class="reference internal" href="../topics/cache.html#django.views.decorators.cache.cache_page" title="django.views.decorators.cache.cache_page"><code class="xref py py-func docutils literal notranslate"><span class="pre">cache_page()</span></code></a> and
+<a class="reference internal" href="../ref/middleware.html#django.middleware.cache.UpdateCacheMiddleware" title="django.middleware.cache.UpdateCacheMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">UpdateCacheMiddleware</span></code></a>, or the <code class="docutils literal notranslate"><span class="pre">vary_on</span></code>
+arguments to the <a class="reference internal" href="../topics/cache.html#std-templatetag-cache"><code class="xref std std-ttag docutils literal notranslate"><span class="pre">cache</span></code></a> template tag (generated by
+<a class="reference internal" href="../topics/cache.html#django.core.cache.utils.make_template_fragment_key" title="django.core.cache.utils.make_template_fragment_key"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_template_fragment_key()</span></code></a>), the cache keys
+are different from the keys generated by older versions of Django. After
+upgrading to Django 6.1, the first request to any previously cached page or
+template fragment that varies on additional information will be a cache miss.</p></li>
+<li><p><a class="reference internal" href="../ref/contrib/contenttypes.html#django.contrib.contenttypes.fields.GenericForeignKey" title="django.contrib.contenttypes.fields.GenericForeignKey"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericForeignKey</span></code></a> now uses a
+separate descriptor class: the private <code class="docutils literal notranslate"><span class="pre">GenericForeignKeyDescriptor</span></code>.</p></li>
+<li><p>The undocumented <code class="docutils literal notranslate"><span class="pre">django.template.library.parse_bits()</span></code> function no longer
+accepts the <code class="docutils literal notranslate"><span class="pre">takes_context</span></code> argument.</p></li>
+<li><p>The <a class="reference internal" href="../ref/files/file.html#django.core.files.File" title="django.core.files.File"><code class="xref py py-class docutils literal notranslate"><span class="pre">File</span></code></a> class now always evaluates to <code class="docutils literal notranslate"><span class="pre">True</span></code>
+in boolean contexts, rather than relying on the <code class="docutils literal notranslate"><span class="pre">name</span></code> attribute. The
+built-in subclasses <code class="docutils literal notranslate"><span class="pre">FieldFile</span></code>, <code class="docutils literal notranslate"><span class="pre">UploadedFile</span></code>,
+<code class="docutils literal notranslate"><span class="pre">TemporaryUploadedFile</span></code>, <code class="docutils literal notranslate"><span class="pre">InMemoryUploadedFile</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">SimpleUploadedFile</span></code> retain the previous behavior of evaluating based on
+the <code class="docutils literal notranslate"><span class="pre">name</span></code> attribute.</p></li>
+<li><p>The undocumented <code class="docutils literal notranslate"><span class="pre">connection()</span></code> method of <a class="reference internal" href="../ref/logging.html#django.utils.log.AdminEmailHandler" title="django.utils.log.AdminEmailHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">log.AdminEmailHandler</span></code></a>
+has been removed and is no longer called. Subclasses overriding
+<a class="reference internal" href="../ref/logging.html#django.utils.log.AdminEmailHandler.send_mail" title="django.utils.log.AdminEmailHandler.send_mail"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AdminEmailHandler.send_mail()</span></code></a> should avoid calling <code class="docutils literal notranslate"><span class="pre">connection()</span></code>.
+See <a class="reference internal" href="../howto/mailers-migration.html#migrating-to-mailers-get-connection"><span class="std std-ref">Replacing get_connection() and connection arguments</span></a> if specific connection
+configuration is needed.</p></li>
+<li><p>The internal implementation of <a class="reference internal" href="../ref/middleware.html#django.middleware.common.BrokenLinkEmailsMiddleware" title="django.middleware.common.BrokenLinkEmailsMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">BrokenLinkEmailsMiddleware</span></code></a> has been
+updated for mailers. If you have subclassed it to customize email sending
+behavior (as suggested in <a class="reference internal" href="../howto/error-reporting.html"><span class="doc">How to manage error reporting</span></a>), you may want to
+review the updates in the base <a class="reference internal" href="../ref/middleware.html#django.middleware.common.BrokenLinkEmailsMiddleware" title="django.middleware.common.BrokenLinkEmailsMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">BrokenLinkEmailsMiddleware</span></code></a> class.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">django.http.multipartparser.MultiPartParser</span></code> now uses strict Base64
+validation when decoding encoded request data. Previously, invalid data could
+be silently ignored or result in empty values. Invalid data now raises
+<code class="docutils literal notranslate"><span class="pre">MultiPartParserError</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">django.core.cache.backends.db.DatabaseCache</span></code> now uses strict Base64
+validation when decoding cached values. Invalid Base64 data will raise an
+exception instead of being silently ignored. Cache values generated by Django
+are unaffected, as they are always valid Base64. However, existing cache
+entries containing non-standard or corrupted Base64 data may no longer be
+readable.</p></li>
+</ul>
+</section>
+</section>
+<section id="s-features-deprecated-in-6-1">
+<span id="s-deprecated-features-6-1"></span><span id="features-deprecated-in-6-1"></span><span id="deprecated-features-6-1"></span><h2>Features deprecated in 6.1<a class="headerlink" href="#features-deprecated-in-6-1" title="Link to this heading">¶</a></h2>
+<section id="s-mailers-deprecations">
+<span id="s-id7"></span><span id="mailers-deprecations"></span><span id="id7"></span><h3>Email<a class="headerlink" href="#mailers-deprecations" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>The <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_BACKEND"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_BACKEND</span></code></a>, <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_FILE_PATH"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_FILE_PATH</span></code></a>,
+<a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_HOST"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_HOST</span></code></a>, <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_HOST_PASSWORD"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_HOST_PASSWORD</span></code></a>,
+<a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_HOST_USER"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_HOST_USER</span></code></a>, <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_PORT"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_PORT</span></code></a>,
+<a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_USE_TLS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_USE_TLS</span></code></a>, <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_USE_SSL"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_USE_SSL</span></code></a>,
+<a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_SSL_CERTFILE"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_SSL_CERTFILE</span></code></a>, <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_SSL_KEYFILE"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_SSL_KEYFILE</span></code></a>, and
+<a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_TIMEOUT"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_TIMEOUT</span></code></a> settings are deprecated. Replace them with a
+<a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> configuration dictionary as described in
+<a class="reference internal" href="../howto/mailers-migration.html#migrating-to-mailers"><span class="std std-ref">Migrating email to mailers</span></a>.</p></li>
+<li><p><a class="reference internal" href="../topics/email.html#django.core.mail.get_connection" title="django.core.mail.get_connection"><code class="xref py py-func docutils literal notranslate"><span class="pre">mail.get_connection()</span></code></a> is deprecated. See
+<a class="reference internal" href="../howto/mailers-migration.html#migrating-to-mailers-get-connection"><span class="std std-ref">Replacing get_connection() and connection arguments</span></a> for replacement options.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">connection</span></code> argument to <a class="reference internal" href="../topics/email.html#django.core.mail.send_mail" title="django.core.mail.send_mail"><code class="xref py py-func docutils literal notranslate"><span class="pre">send_mail()</span></code></a>, <a class="reference internal" href="../topics/email.html#django.core.mail.send_mass_mail" title="django.core.mail.send_mass_mail"><code class="xref py py-func docutils literal notranslate"><span class="pre">send_mass_mail()</span></code></a>,
+<a class="reference internal" href="../topics/email.html#django.core.mail.mail_admins" title="django.core.mail.mail_admins"><code class="xref py py-func docutils literal notranslate"><span class="pre">mail_admins()</span></code></a>, <a class="reference internal" href="../topics/email.html#django.core.mail.mail_managers" title="django.core.mail.mail_managers"><code class="xref py py-func docutils literal notranslate"><span class="pre">mail_managers()</span></code></a>, and <a class="reference internal" href="../topics/email.html#django.core.mail.EmailMessage" title="django.core.mail.EmailMessage"><code class="xref py py-class docutils literal notranslate"><span class="pre">EmailMessage</span></code></a> is
+deprecated. The <code class="docutils literal notranslate"><span class="pre">EmailMessage.connection</span></code> attribute is also deprecated.
+Switch to the <code class="docutils literal notranslate"><span class="pre">using</span></code> argument with a <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> alias.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">fail_silently</span></code> argument to <a class="reference internal" href="../topics/email.html#django.core.mail.send_mail" title="django.core.mail.send_mail"><code class="xref py py-func docutils literal notranslate"><span class="pre">send_mail()</span></code></a>,
+<a class="reference internal" href="../topics/email.html#django.core.mail.send_mass_mail" title="django.core.mail.send_mass_mail"><code class="xref py py-func docutils literal notranslate"><span class="pre">send_mass_mail()</span></code></a>, <a class="reference internal" href="../topics/email.html#django.core.mail.mail_admins" title="django.core.mail.mail_admins"><code class="xref py py-func docutils literal notranslate"><span class="pre">mail_admins()</span></code></a>, <a class="reference internal" href="../topics/email.html#django.core.mail.mail_managers" title="django.core.mail.mail_managers"><code class="xref py py-func docutils literal notranslate"><span class="pre">mail_managers()</span></code></a>, and
+<a class="reference internal" href="../topics/email.html#django.core.mail.EmailMessage.send" title="django.core.mail.EmailMessage.send"><code class="xref py py-meth docutils literal notranslate"><span class="pre">EmailMessage.send()</span></code></a> is deprecated. See
+<a class="reference internal" href="../howto/mailers-migration.html#migrating-to-mailers-fail-silently"><span class="std std-ref">Replacing fail_silently</span></a> for alternatives.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">auth_user</span></code> and <code class="docutils literal notranslate"><span class="pre">auth_password</span></code> arguments to <a class="reference internal" href="../topics/email.html#django.core.mail.send_mail" title="django.core.mail.send_mail"><code class="xref py py-func docutils literal notranslate"><span class="pre">send_mail()</span></code></a> and
+<a class="reference internal" href="../topics/email.html#django.core.mail.send_mass_mail" title="django.core.mail.send_mass_mail"><code class="xref py py-func docutils literal notranslate"><span class="pre">send_mass_mail()</span></code></a> are deprecated. Replace them with <code class="docutils literal notranslate"><span class="pre">&quot;username&quot;</span></code> and
+<code class="docutils literal notranslate"><span class="pre">&quot;password&quot;</span></code> <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS-OPTIONS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">OPTIONS</span></code></a> in <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a>.
+See <a class="reference internal" href="../howto/mailers-migration.html#migrating-to-mailers-auth"><span class="std std-ref">Replacing auth_user and auth_password</span></a>.</p></li>
+<li><p>Directly constructing and using instances of the
+<a class="reference internal" href="../topics/email.html#topic-email-smtp-backend"><span class="std std-ref">smtp.EmailBackend</span></a> class is deprecated. Use
+<a class="reference internal" href="../topics/email.html#django.core.mail.mailers" title="django.core.mail.mailers"><code class="xref py py-data docutils literal notranslate"><span class="pre">mail.mailers</span></code></a> to obtain email backend instances.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">BaseEmailBackend.__init__()</span></code> constructor no longer silently ignores
+unknown keyword arguments. Custom email backend subclasses should ensure they
+have consumed all supported <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code> before forwarding the remainder to
+superclass init. The base class now issues a deprecation warning for unknown
+arguments, and it will treat them as errors starting in Django 2028. See
+<a class="reference internal" href="../howto/mailers-migration.html#migrating-to-mailers-email-backends"><span class="std std-ref">Migrating custom email backends</span></a>.</p></li>
+<li><p>Support for <code class="docutils literal notranslate"><span class="pre">fail_silently</span></code> in the <code class="docutils literal notranslate"><span class="pre">BaseEmailBackend</span></code> is deprecated.
+A custom email backend that wants to support <code class="docutils literal notranslate"><span class="pre">fail_silently</span></code> should manage
+its own local attribute, not pass it to the base backend constructor. See
+<a class="reference internal" href="../howto/mailers-migration.html#migrating-to-mailers-email-backends"><span class="std std-ref">Migrating custom email backends</span></a>.</p></li>
+</ul>
+</section>
+<section id="s-id8">
+<span id="id8"></span><h3>Miscellaneous<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Calling <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.select_related" title="django.db.models.query.QuerySet.select_related"><code class="xref py py-meth docutils literal notranslate"><span class="pre">select_related()</span></code></a> with no
+arguments to select all non-nullable related fields is deprecated. Specify
+the related fields to fetch instead, or use the
+<a class="reference internal" href="../topics/db/fetch-modes.html#django.db.models.FETCH_PEERS" title="django.db.models.FETCH_PEERS"><code class="xref py py-attr docutils literal notranslate"><span class="pre">FETCH_PEERS</span></code></a> fetch mode.</p></li>
+<li><p>Setting <a class="reference internal" href="../ref/contrib/admin/index.html#django.contrib.admin.ModelAdmin.list_select_related" title="django.contrib.admin.ModelAdmin.list_select_related"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ModelAdmin.list_select_related</span></code></a> to <code class="docutils literal notranslate"><span class="pre">True</span></code> and returning
+<code class="docutils literal notranslate"><span class="pre">True</span></code> from <a class="reference internal" href="../ref/contrib/admin/index.html#django.contrib.admin.ModelAdmin.get_list_select_related" title="django.contrib.admin.ModelAdmin.get_list_select_related"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ModelAdmin.get_list_select_related()</span></code></a> are deprecated.
+Specify the related fields to fetch instead.</p></li>
+<li><p>Calling <a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.values_list" title="django.db.models.query.QuerySet.values_list"><code class="xref py py-meth docutils literal notranslate"><span class="pre">QuerySet.values_list()</span></code></a> with <code class="docutils literal notranslate"><span class="pre">flat=True</span></code> and no field name
+is deprecated. Pass an explicit field name, like
+<code class="docutils literal notranslate"><span class="pre">values_list(&quot;pk&quot;,</span> <span class="pre">flat=True)</span></code>.</p></li>
+<li><p>Support for <code class="docutils literal notranslate"><span class="pre">Model.from_db()</span></code> methods that do not accept the
+<code class="docutils literal notranslate"><span class="pre">fetch_mode</span></code> keyword argument is deprecated.</p></li>
+<li><p>The use of <code class="docutils literal notranslate"><span class="pre">None</span></code> to represent a top-level JSON scalar <code class="docutils literal notranslate"><span class="pre">null</span></code> when
+querying <a class="reference internal" href="../ref/models/fields.html#django.db.models.JSONField" title="django.db.models.JSONField"><code class="xref py py-class docutils literal notranslate"><span class="pre">JSONField</span></code></a> is now deprecated in favor of
+the new <a class="reference internal" href="../ref/models/expressions.html#django.db.models.JSONNull" title="django.db.models.JSONNull"><code class="xref py py-class docutils literal notranslate"><span class="pre">JSONNull</span></code></a> expression. At the end of the
+deprecation period, <code class="docutils literal notranslate"><span class="pre">None</span></code> values compile to SQL <code class="docutils literal notranslate"><span class="pre">IS</span> <span class="pre">NULL</span></code> when used as
+the top-level value. <a class="reference internal" href="../topics/db/queries.html#std-fieldlookup-jsonfield.key"><code class="xref std std-lookup docutils literal notranslate"><span class="pre">Key</span> <span class="pre">and</span> <span class="pre">index</span> <span class="pre">lookups</span></code></a> are
+unaffected by this deprecation.</p></li>
+<li><p>The undocumented <code class="docutils literal notranslate"><span class="pre">django.db.models.fields.BLANK_CHOICE_DASH</span></code> constant is
+deprecated. See the <a class="reference internal" href="../ref/settings.html#std-setting-USE_BLANK_CHOICE_DASH"><code class="xref std std-setting docutils literal notranslate"><span class="pre">USE_BLANK_CHOICE_DASH</span></code></a> transitional setting for
+migration advice.</p></li>
+<li><p>The <a class="reference internal" href="../ref/settings.html#std-setting-USE_BLANK_CHOICE_DASH"><code class="xref std std-setting docutils literal notranslate"><span class="pre">USE_BLANK_CHOICE_DASH</span></code></a> transitional setting is deprecated.</p></li>
+<li><p>The <a class="reference internal" href="../ref/settings.html#std-setting-SIGNED_COOKIE_LEGACY_SALT_FALLBACK"><code class="xref std std-setting docutils literal notranslate"><span class="pre">SIGNED_COOKIE_LEGACY_SALT_FALLBACK</span></code></a> transitional setting is
+deprecated.</p></li>
+<li><p>The undocumented <code class="docutils literal notranslate"><span class="pre">get_placeholder</span></code> method of
+<a class="reference internal" href="../ref/models/fields.html#django.db.models.Field" title="django.db.models.Field"><code class="xref py py-class docutils literal notranslate"><span class="pre">Field</span></code></a> is deprecated in favor of the newly
+introduced <code class="docutils literal notranslate"><span class="pre">get_placeholder_sql</span></code> method, which has the same input signature
+but is expected to return a two-elements tuple composed of an SQL format
+string and a tuple of associated parameters. This method should now expect
+to be provided expressions meant to be compiled via the provided <code class="docutils literal notranslate"><span class="pre">compiler</span></code>
+argument.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">quote_name_unless_alias()</span></code> method of <code class="docutils literal notranslate"><span class="pre">SQLCompiler</span></code>, the type of
+object passed as the <code class="docutils literal notranslate"><span class="pre">compiler</span></code> argument to the <code class="docutils literal notranslate"><span class="pre">as_sql()</span></code> method of
+<a class="reference internal" href="../ref/models/expressions.html#writing-your-own-query-expressions"><span class="std std-ref">expressions</span></a>, is deprecated in
+favor of the newly introduced <code class="docutils literal notranslate"><span class="pre">quote_name()</span></code> method.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">email_backend</span></code> argument of <a class="reference internal" href="../ref/logging.html#django.utils.log.AdminEmailHandler" title="django.utils.log.AdminEmailHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">log.AdminEmailHandler</span></code></a> is
+deprecated in favor of the newly introduced <code class="docutils literal notranslate"><span class="pre">using</span></code> argument.
+See <a class="reference internal" href="../howto/mailers-migration.html#migrating-to-mailers-adminemailhandler"><span class="std std-ref">Updating AdminEmailHandler email_backend</span></a> for details.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">BitAnd</span></code>, <code class="docutils literal notranslate"><span class="pre">BitOr</span></code>, and <code class="docutils literal notranslate"><span class="pre">BitXor</span></code> classes in
+<code class="docutils literal notranslate"><span class="pre">django.contrib.postgres.aggregates</span></code> are deprecated in favor of the
+generally available <a class="reference internal" href="../ref/models/querysets.html#django.db.models.BitAnd" title="django.db.models.BitAnd"><code class="xref py py-class docutils literal notranslate"><span class="pre">BitAnd</span></code></a>,
+<a class="reference internal" href="../ref/models/querysets.html#django.db.models.BitOr" title="django.db.models.BitOr"><code class="xref py py-class docutils literal notranslate"><span class="pre">BitOr</span></code></a>, and <a class="reference internal" href="../ref/models/querysets.html#django.db.models.BitXor" title="django.db.models.BitXor"><code class="xref py py-class docutils literal notranslate"><span class="pre">BitXor</span></code></a>
+classes.</p></li>
+<li><p>Support for double-dot variable lookups, like <code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">book..title</span> <span class="pre">}}</span></code>, is
+deprecated. This syntax maps to a lookup of the empty string, which is
+normally a mistake.</p></li>
+<li><p>The default value of the <code class="docutils literal notranslate"><span class="pre">algorithm</span></code> argument for
+<code class="docutils literal notranslate"><span class="pre">django.utils.crypto.salted_hmac()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">django.core.signing.base64_hmac()</span></code> is deprecated and will change from
+<code class="docutils literal notranslate"><span class="pre">&quot;sha1&quot;</span></code> to <code class="docutils literal notranslate"><span class="pre">&quot;sha256&quot;</span></code> in Django 2028. Pass an explicit <code class="docutils literal notranslate"><span class="pre">algorithm</span></code>
+to silence the deprecation warning.</p></li>
+<li><p>Overriding <code class="docutils literal notranslate"><span class="pre">ModelAdmin.get_actions()</span></code> without the new <code class="docutils literal notranslate"><span class="pre">action_location</span></code>
+parameter is deprecated.</p></li>
+<li><p>Unpacking or indexing the dictionary values of the
+<code class="docutils literal notranslate"><span class="pre">ModelAdmin.get_actions()</span></code> return value is deprecated. Use
+<a class="reference internal" href="../ref/contrib/admin/actions.html#django.contrib.admin.Action" title="django.contrib.admin.Action"><code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code></a> attributes instead.</p></li>
+<li><p>Overriding <code class="docutils literal notranslate"><span class="pre">ModelAdmin.get_action_choices()</span></code> without the new
+<code class="docutils literal notranslate"><span class="pre">action_location</span></code> parameter is deprecated.</p></li>
+<li><p><a class="reference internal" href="../topics/db/transactions.html#django.db.transaction.savepoint" title="django.db.transaction.savepoint"><code class="xref py py-func docutils literal notranslate"><span class="pre">django.db.transaction.savepoint()</span></code></a> is deprecated in favor of
+<a class="reference internal" href="../topics/db/transactions.html#django.db.transaction.savepoint_create" title="django.db.transaction.savepoint_create"><code class="xref py py-func docutils literal notranslate"><span class="pre">savepoint_create()</span></code></a>.</p></li>
+</ul>
+</section>
+</section>
+<section id="s-features-removed-in-6-1">
+<span id="features-removed-in-6-1"></span><h2>Features removed in 6.1<a class="headerlink" href="#features-removed-in-6-1" title="Link to this heading">¶</a></h2>
+<p>These features have reached the end of their deprecation cycle and are removed
+in Django 6.1.</p>
+<p>See <a class="reference internal" href="5.2.html#deprecated-features-5-2"><span class="std std-ref">Features deprecated in 5.2</span></a> for details on these changes, including how
+to remove usage of these features.</p>
+<ul class="simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">all</span></code> parameter for the <code class="docutils literal notranslate"><span class="pre">django.contrib.staticfiles.finders.find()</span></code>
+function is removed in favor of the <code class="docutils literal notranslate"><span class="pre">find_all</span></code> parameter.</p></li>
+<li><p>Fallbacks to <code class="docutils literal notranslate"><span class="pre">request.user</span></code> and <code class="docutils literal notranslate"><span class="pre">request.auser()</span></code> when <code class="docutils literal notranslate"><span class="pre">user</span></code> is
+<code class="docutils literal notranslate"><span class="pre">None</span></code> in <code class="docutils literal notranslate"><span class="pre">django.contrib.auth.login()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">django.contrib.auth.alogin()</span></code>, respectively, are removed.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">ordering</span></code> keyword parameter of the PostgreSQL specific aggregation
+functions <code class="docutils literal notranslate"><span class="pre">django.contrib.postgres.aggregates.ArrayAgg</span></code>,
+<code class="docutils literal notranslate"><span class="pre">django.contrib.postgres.aggregates.JSONBAgg</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">django.contrib.postgres.aggregates.StringAgg</span></code> are removed in favor
+of the <code class="docutils literal notranslate"><span class="pre">order_by</span></code> parameter.</p></li>
+<li><p>Support for subclasses of <code class="docutils literal notranslate"><span class="pre">RemoteUserMiddleware</span></code> that override
+<code class="docutils literal notranslate"><span class="pre">process_request()</span></code> without overriding <code class="docutils literal notranslate"><span class="pre">aprocess_request()</span></code> is
+removed.</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Django 6.1 release notes</a><ul>
+<li><a class="reference internal" href="#python-compatibility">Python compatibility</a></li>
+<li><a class="reference internal" href="#what-s-new-in-django-6-1">What’s new in Django 6.1</a><ul>
+<li><a class="reference internal" href="#model-field-fetch-modes">Model field fetch modes</a></li>
+<li><a class="reference internal" href="#database-level-delete-options-for-foreignkey-on-delete">Database-level delete options for <code class="docutils literal notranslate"><span class="pre">ForeignKey.on_delete</span></code></a></li>
+<li><a class="reference internal" href="#mailers">Mailers</a></li>
+<li><a class="reference internal" href="#adopting-calendar-versioning">Adopting calendar versioning</a></li>
+<li><a class="reference internal" href="#minor-features">Minor features</a><ul>
+<li><a class="reference internal" href="#django-contrib-admin"><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.admin</span></code></a></li>
+<li><a class="reference internal" href="#django-contrib-auth"><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.auth</span></code></a></li>
+<li><a class="reference internal" href="#django-contrib-gis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.gis</span></code></a></li>
+<li><a class="reference internal" href="#django-contrib-postgres"><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.postgres</span></code></a></li>
+<li><a class="reference internal" href="#django-contrib-sessions"><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.sessions</span></code></a></li>
+<li><a class="reference internal" href="#csp">CSP</a></li>
+<li><a class="reference internal" href="#email">Email</a></li>
+<li><a class="reference internal" href="#forms">Forms</a></li>
+<li><a class="reference internal" href="#generic-views">Generic Views</a></li>
+<li><a class="reference internal" href="#management-commands">Management Commands</a></li>
+<li><a class="reference internal" href="#models">Models</a></li>
+<li><a class="reference internal" href="#requests-and-responses">Requests and Responses</a></li>
+<li><a class="reference internal" href="#security">Security</a></li>
+<li><a class="reference internal" href="#serialization">Serialization</a></li>
+<li><a class="reference internal" href="#tasks">Tasks</a></li>
+<li><a class="reference internal" href="#tests">Tests</a></li>
+<li><a class="reference internal" href="#utilities">Utilities</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#backwards-incompatible-changes-in-6-1">Backwards incompatible changes in 6.1</a><ul>
+<li><a class="reference internal" href="#database-backend-api">Database backend API</a></li>
+<li><a class="reference internal" href="#id1"><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.admin</span></code></a></li>
+<li><a class="reference internal" href="#id2"><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.auth</span></code></a></li>
+<li><a class="reference internal" href="#id3"><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.gis</span></code></a></li>
+<li><a class="reference internal" href="#id4"><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.contrib.postgres</span></code></a></li>
+<li><a class="reference internal" href="#id5">Email</a></li>
+<li><a class="reference internal" href="#id6">Models</a></li>
+<li><a class="reference internal" href="#system-checks">System checks</a></li>
+<li><a class="reference internal" href="#dropped-support-for-postgresql-14">Dropped support for PostgreSQL 14</a></li>
+<li><a class="reference internal" href="#dropped-support-for-mysql-8-4">Dropped support for MySQL &lt; 8.4</a></li>
+<li><a class="reference internal" href="#dropped-support-for-mariadb-10-11">Dropped support for MariaDB &lt; 10.11</a></li>
+<li><a class="reference internal" href="#miscellaneous">Miscellaneous</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#features-deprecated-in-6-1">Features deprecated in 6.1</a><ul>
+<li><a class="reference internal" href="#mailers-deprecations">Email</a></li>
+<li><a class="reference internal" href="#id8">Miscellaneous</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#features-removed-in-6-1">Features removed in 6.1</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="6.1.1.html"
+                          title="previous chapter">Django 6.1.1 release notes</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="6.0.9.html"
+                          title="next chapter">Django 6.0.9 release notes</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/releases/6.1.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="6.1.1.html" title="Django 6.1.1 release notes">previous</a>
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="6.0.9.html" title="Django 6.0.9 release notes">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

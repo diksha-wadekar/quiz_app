@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Fetch modes &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../../_static/default.css?v=bf4d74af" />
+    <script src="../../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Aggregation" href="aggregation.html" />
+    <link rel="prev" title="Making queries" href="queries.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../genindex.html">Index</a>  |
+        <a title="Module index" href="../../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="queries.html" title="Making queries">previous</a>
+     |
+    <a href="../index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="aggregation.html" title="Aggregation">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="topics-db-fetch-modes">
+            
+  <section id="s-fetch-modes">
+<span id="fetch-modes"></span><h1>Fetch modes<a class="headerlink" href="#fetch-modes" title="Link to this heading">¶</a></h1>
+<div class="versionadded">
+<span class="title">New in Django 6.1.</span> </div>
+<p id="module-django.db.models.fetch_modes">When accessing model fields that were not loaded as part of the original query,
+Django will fetch that field’s data from the database. You can customize the
+behavior of this fetching with a <strong>fetch mode</strong>, making it more efficient or
+even blocking it.</p>
+<p>Use <a class="reference internal" href="../../ref/models/querysets.html#django.db.models.query.QuerySet.fetch_mode" title="django.db.models.query.QuerySet.fetch_mode"><code class="xref py py-meth docutils literal notranslate"><span class="pre">QuerySet.fetch_mode()</span></code></a> to set the fetch mode for model
+instances fetched by a <code class="docutils literal notranslate"><span class="pre">QuerySet</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+
+<span class="n">books</span> <span class="o">=</span> <span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">fetch_mode</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">FETCH_PEERS</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Fetch modes apply to:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../../ref/models/fields.html#django.db.models.ForeignKey" title="django.db.models.ForeignKey"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> fields</p></li>
+<li><p><a class="reference internal" href="../../ref/models/fields.html#django.db.models.OneToOneField" title="django.db.models.OneToOneField"><code class="xref py py-class docutils literal notranslate"><span class="pre">OneToOneField</span></code></a> fields and their reverse accessors</p></li>
+<li><p>Fields deferred with <a class="reference internal" href="../../ref/models/querysets.html#django.db.models.query.QuerySet.defer" title="django.db.models.query.QuerySet.defer"><code class="xref py py-meth docutils literal notranslate"><span class="pre">QuerySet.defer()</span></code></a> or <a class="reference internal" href="../../ref/models/querysets.html#django.db.models.query.QuerySet.only" title="django.db.models.query.QuerySet.only"><code class="xref py py-meth docutils literal notranslate"><span class="pre">QuerySet.only()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../ref/contrib/contenttypes.html#generic-relations"><span class="std std-ref">Generic relations</span></a></p></li>
+</ul>
+<p>Django copies the fetch mode of an instance to any related objects it fetches,
+so the mode applies to a whole tree of relationships, not just the top-level
+model in the initial <code class="docutils literal notranslate"><span class="pre">QuerySet</span></code>. This copying is also done in related
+managers, even though fetch modes don’t affect such managers’ queries.</p>
+<section id="s-available-modes">
+<span id="available-modes"></span><h2>Available modes<a class="headerlink" href="#available-modes" title="Link to this heading">¶</a></h2>
+<div class="admonition-referencing-fetch-modes admonition">
+<p class="admonition-title">Referencing fetch modes</p>
+<p>Fetch modes are defined in <code class="docutils literal notranslate"><span class="pre">django.db.models.fetch_modes</span></code>, but for
+convenience they’re imported into <a class="reference internal" href="models.html#module-django.db.models" title="django.db.models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">django.db.models</span></code></a>. The standard
+convention is to use <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">django.db</span> <span class="pre">import</span> <span class="pre">models</span></code> and refer to the
+fetch modes as <code class="docutils literal notranslate"><span class="pre">models.&lt;mode&gt;</span></code>.</p>
+</div>
+<p>Django provides three fetch modes. We’ll explain them below using these models:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Author</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span> <span class="o">...</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Book</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Author</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>…and this loop:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">book</span> <span class="ow">in</span> <span class="n">books</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">book</span><span class="o">.</span><span class="n">author</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>…where <code class="docutils literal notranslate"><span class="pre">books</span></code> is a <code class="docutils literal notranslate"><span class="pre">QuerySet</span></code> of <code class="docutils literal notranslate"><span class="pre">Book</span></code> instances using some fetch mode.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.db.models.FETCH_ONE">
+<span class="sig-name descname"><span class="pre">FETCH_ONE</span></span><a class="headerlink" href="#django.db.models.FETCH_ONE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Fetches the missing field for the current instance only. This is the default
+mode.</p>
+<p>Using <code class="docutils literal notranslate"><span class="pre">FETCH_ONE</span></code> for the above example would use:</p>
+<ul class="simple">
+<li><p>1 query to fetch <code class="docutils literal notranslate"><span class="pre">books</span></code></p></li>
+<li><p>N queries, where N is the number of books, to fetch the missing <code class="docutils literal notranslate"><span class="pre">author</span></code>
+field</p></li>
+</ul>
+<p>…for a total of 1+N queries. This query pattern is known as the “N+1 queries
+problem” because it often leads to performance issues when N is large.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.db.models.FETCH_PEERS">
+<span class="sig-name descname"><span class="pre">FETCH_PEERS</span></span><a class="headerlink" href="#django.db.models.FETCH_PEERS" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Fetches the missing field for the current instance and its “peers”—instances
+that came from the same initial <code class="docutils literal notranslate"><span class="pre">QuerySet</span></code>. The behavior of this mode is
+based on the assumption that if you need a field for one instance, you probably
+need it for all instances in the same batch, since you’ll likely process them
+all identically.</p>
+<p>Using <code class="docutils literal notranslate"><span class="pre">FETCH_PEERS</span></code> for the above example would use:</p>
+<ul class="simple">
+<li><p>1 query to fetch <code class="docutils literal notranslate"><span class="pre">books</span></code></p></li>
+<li><p>1 query to fetch all missing <code class="docutils literal notranslate"><span class="pre">author</span></code> fields for the batch of books</p></li>
+</ul>
+<p>…for a total of 2 queries. The batch query makes this mode a lot more efficient
+than <code class="docutils literal notranslate"><span class="pre">FETCH_ONE</span></code> and is similar to an on-demand call to
+<a class="reference internal" href="../../ref/models/querysets.html#django.db.models.query.QuerySet.prefetch_related" title="django.db.models.query.QuerySet.prefetch_related"><code class="xref py py-meth docutils literal notranslate"><span class="pre">QuerySet.prefetch_related()</span></code></a> or
+<a class="reference internal" href="../../ref/models/querysets.html#django.db.models.prefetch_related_objects" title="django.db.models.prefetch_related_objects"><code class="xref py py-func docutils literal notranslate"><span class="pre">prefetch_related_objects()</span></code></a>. Using <code class="docutils literal notranslate"><span class="pre">FETCH_PEERS</span></code> can
+reduce most cases of the “N+1 queries problem” to two queries without
+much effort.</p>
+<p>The “peer” instances are tracked in a list of weak references, to avoid
+memory leaks where some peer instances are discarded.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.db.models.FETCH_RAISE">
+<span class="sig-name descname"><span class="pre">FETCH_RAISE</span></span><a class="headerlink" href="#django.db.models.FETCH_RAISE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>Raises a <a class="reference internal" href="../../ref/exceptions.html#django.core.exceptions.FieldFetchBlocked" title="django.core.exceptions.FieldFetchBlocked"><code class="xref py py-exc docutils literal notranslate"><span class="pre">FieldFetchBlocked</span></code></a> exception.</p>
+<p>Using <code class="docutils literal notranslate"><span class="pre">FETCH_RAISE</span></code> for the above example would raise an exception at the
+access of <code class="docutils literal notranslate"><span class="pre">book.author</span></code>, like:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">FieldFetchBlocked</span><span class="p">(</span><span class="s2">&quot;Fetching of Primary.value blocked.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This mode can prevent unintentional queries in performance-critical
+sections of code.</p>
+</section>
+<section id="s-make-a-fetch-mode-the-default-for-a-model-class">
+<span id="s-fetch-modes-custom-manager"></span><span id="make-a-fetch-mode-the-default-for-a-model-class"></span><span id="fetch-modes-custom-manager"></span><h2>Make a fetch mode the default for a model class<a class="headerlink" href="#make-a-fetch-mode-the-default-for-a-model-class" title="Link to this heading">¶</a></h2>
+<p>Set the default fetch mode for a model class with a
+<a class="reference internal" href="managers.html#custom-managers"><span class="std std-ref">custom manager</span></a> that overrides <code class="docutils literal notranslate"><span class="pre">get_queryset()</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BookManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_queryset</span><span class="p">()</span><span class="o">.</span><span class="n">fetch_mode</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">FETCH_PEERS</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Book</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">()</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;Author&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">BookManager</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Fetch modes</a><ul>
+<li><a class="reference internal" href="#available-modes">Available modes</a></li>
+<li><a class="reference internal" href="#make-a-fetch-mode-the-default-for-a-model-class">Make a fetch mode the default for a model class</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="queries.html"
+                          title="previous chapter">Making queries</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="aggregation.html"
+                          title="next chapter">Aggregation</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/topics/db/fetch-modes.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="queries.html" title="Making queries">previous</a>
+     |
+    <a href="../index.html" title="Using Django" accesskey="U">up</a>
+   |
+    <a href="aggregation.html" title="Aggregation">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

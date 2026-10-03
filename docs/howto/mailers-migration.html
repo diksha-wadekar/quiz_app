@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Migrating email to mailers &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../_static/default.css?v=bf4d74af" />
+    <script src="../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Django FAQ" href="../faq/index.html" />
+    <link rel="prev" title="How to customize the shell command" href="custom-shell.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Module index" href="../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="custom-shell.html" title="How to customize the &lt;code class=&#34;docutils literal notranslate&#34;&gt;&lt;span class=&#34;pre&#34;&gt;shell&lt;/span&gt;&lt;/code&gt; command">previous</a>
+     |
+    <a href="index.html" title="How-to guides" accesskey="U">up</a>
+   |
+    <a href="../faq/index.html" title="Django FAQ">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="howto-mailers-migration">
+            
+  <section id="s-migrating-email-to-mailers">
+<span id="s-migrating-to-mailers"></span><span id="migrating-email-to-mailers"></span><span id="migrating-to-mailers"></span><h1>Migrating email to mailers<a class="headerlink" href="#migrating-email-to-mailers" title="Link to this heading">¶</a></h1>
+<p>Django 6.1 introduced the <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> setting, replacing
+<a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_BACKEND"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_BACKEND</span></code></a> and several other <code class="docutils literal notranslate"><span class="pre">EMAIL_*</span></code> settings. It also
+introduced <a class="reference internal" href="../topics/email.html#django.core.mail.mailers" title="django.core.mail.mailers"><code class="xref py py-data docutils literal notranslate"><span class="pre">mail.mailers</span></code></a> for obtaining configured email backend
+instances, replacing <a class="reference internal" href="../topics/email.html#django.core.mail.get_connection" title="django.core.mail.get_connection"><code class="xref py py-func docutils literal notranslate"><span class="pre">mail.get_connection()</span></code></a>. A new <code class="docutils literal notranslate"><span class="pre">using</span></code> argument
+replaces the earlier <code class="docutils literal notranslate"><span class="pre">connection</span></code> in Django functions that send email.</p>
+<p>This guide provides details on migrating existing projects to the new mailers
+functionality.</p>
+<p>All Django projects that send email should:</p>
+<ul>
+<li><p>If using any third-party packages that send email, <a class="reference internal" href="#migrating-to-mailers-third-party"><span class="std std-ref">verify their
+compatibility</span></a> with <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a>
+before making other changes.</p></li>
+<li><p><a class="reference internal" href="#migrating-to-mailers-settings"><span class="std std-ref">Update email-related settings</span></a>.</p></li>
+<li><p>Run with deprecation warnings enabled (see
+<a class="reference internal" href="upgrade-version.html#resolving-deprecation-warnings"><span class="std std-ref">Resolving deprecation warnings</span></a>) to identify
+other code needing updates.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Running tests may not identify all relevant deprecations. Test suites
+often use a non-functional email backend (such as the memory backend that
+Django <a class="reference internal" href="../topics/testing/tools.html#topics-testing-email"><span class="std std-ref">substitutes during tests</span></a>), so can
+miss deprecation warnings that are only issued from the production email
+configuration.</p>
+<p>Consider running with deprecation warnings enabled in production to catch
+those deprecations. Or carefully review your code (including third-party
+packages) for use of any deprecated email features.</p>
+</div>
+</li>
+</ul>
+<p>Other updates are needed only for projects or reusable Django libraries that
+use these specific features:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#migrating-to-mailers-get-connection"><span class="std std-ref">Replacing get_connection() and connection arguments</span></a></p></li>
+<li><p><a class="reference internal" href="#migrating-to-mailers-fail-silently"><span class="std std-ref">Replacing fail_silently</span></a></p></li>
+<li><p><a class="reference internal" href="#migrating-to-mailers-email-backends"><span class="std std-ref">Migrating custom email backends</span></a></p></li>
+<li><p><a class="reference internal" href="#migrating-to-mailers-auth"><span class="std std-ref">Replacing auth_user and auth_password</span></a></p></li>
+<li><p><a class="reference internal" href="#migrating-to-mailers-adminemailhandler"><span class="std std-ref">Updating AdminEmailHandler email_backend</span></a></p></li>
+<li><p><a class="reference internal" href="#migrating-to-mailers-error-reporting"><span class="std std-ref">Ignoring transient failures in error reporting</span></a></p></li>
+</ul>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version 6.1: </span>The following settings and functions will be removed in Django 2028:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_BACKEND"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_BACKEND</span></code></a>, <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_FILE_PATH"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_FILE_PATH</span></code></a>,
+<a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_HOST"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_HOST</span></code></a>, <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_HOST_PASSWORD"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_HOST_PASSWORD</span></code></a>,
+<a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_HOST_USER"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_HOST_USER</span></code></a>, <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_PORT"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_PORT</span></code></a>,
+<a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_SSL_CERTFILE"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_SSL_CERTFILE</span></code></a>, <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_SSL_KEYFILE"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_SSL_KEYFILE</span></code></a>,
+<a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_TIMEOUT"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_TIMEOUT</span></code></a>, <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_USE_SSL"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_USE_SSL</span></code></a>,
+<a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_USE_TLS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_USE_TLS</span></code></a></p></li>
+<li><p><a class="reference internal" href="../topics/email.html#django.core.mail.get_connection" title="django.core.mail.get_connection"><code class="xref py py-func docutils literal notranslate"><span class="pre">mail.get_connection()</span></code></a> and the <code class="docutils literal notranslate"><span class="pre">connection</span></code> arguments to mail
+functions</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">fail_silently</span></code> argument to <a class="reference internal" href="../topics/email.html#django.core.mail.send_mail" title="django.core.mail.send_mail"><code class="xref py py-func docutils literal notranslate"><span class="pre">send_mail()</span></code></a>,
+<a class="reference internal" href="../topics/email.html#django.core.mail.send_mass_mail" title="django.core.mail.send_mass_mail"><code class="xref py py-func docutils literal notranslate"><span class="pre">send_mass_mail()</span></code></a>, <a class="reference internal" href="../topics/email.html#django.core.mail.mail_admins" title="django.core.mail.mail_admins"><code class="xref py py-func docutils literal notranslate"><span class="pre">mail_admins()</span></code></a>, <a class="reference internal" href="../topics/email.html#django.core.mail.mail_managers" title="django.core.mail.mail_managers"><code class="xref py py-func docutils literal notranslate"><span class="pre">mail_managers()</span></code></a>,
+and <a class="reference internal" href="../topics/email.html#django.core.mail.EmailMessage.send" title="django.core.mail.EmailMessage.send"><code class="xref py py-meth docutils literal notranslate"><span class="pre">EmailMessage.send()</span></code></a></p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">auth_user</span></code> and <code class="docutils literal notranslate"><span class="pre">auth_password</span></code> arguments to <a class="reference internal" href="../topics/email.html#django.core.mail.send_mail" title="django.core.mail.send_mail"><code class="xref py py-func docutils literal notranslate"><span class="pre">send_mail()</span></code></a>
+and <a class="reference internal" href="../topics/email.html#django.core.mail.send_mass_mail" title="django.core.mail.send_mass_mail"><code class="xref py py-func docutils literal notranslate"><span class="pre">send_mass_mail()</span></code></a></p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">email_backend</span></code> argument to <a class="reference internal" href="../ref/logging.html#django.utils.log.AdminEmailHandler" title="django.utils.log.AdminEmailHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminEmailHandler</span></code></a></p></li>
+</ul>
+</div>
+<section id="s-migrating-settings">
+<span id="s-migrating-to-mailers-settings"></span><span id="migrating-settings"></span><span id="migrating-to-mailers-settings"></span><h2>Migrating settings<a class="headerlink" href="#migrating-settings" title="Link to this heading">¶</a></h2>
+<p>Often, the only change needed to migrate to mailers is updating email-related
+settings. In your project’s settings, define a <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> dict with a
+<code class="docutils literal notranslate"><span class="pre">&quot;default&quot;</span></code> entry matching the earlier <code class="docutils literal notranslate"><span class="pre">EMAIL_*</span></code> settings:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MAILERS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;BACKEND&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">,</span>  <span class="c1"># value of EMAIL_BACKEND setting</span>
+        <span class="s2">&quot;OPTIONS&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="c1"># values from other deprecated EMAIL_* settings</span>
+            <span class="o">...</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>For example, to update these settings:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">EMAIL_BACKEND</span> <span class="o">=</span> <span class="s2">&quot;django.core.mail.backends.smtp.EmailBackend&quot;</span>
+<span class="n">EMAIL_HOST</span> <span class="o">=</span> <span class="s2">&quot;mail.example.net&quot;</span>
+<span class="n">EMAIL_USE_TLS</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">EMAIL_PORT</span> <span class="o">=</span> <span class="mi">587</span>
+<span class="n">EMAIL_HOST_USER</span> <span class="o">=</span> <span class="s2">&quot;user@example.net&quot;</span>
+<span class="n">EMAIL_HOST_PASSWORD</span> <span class="o">=</span> <span class="s2">&quot;password&quot;</span>
+</pre></div>
+</div>
+<p>use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MAILERS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;BACKEND&quot;</span><span class="p">:</span> <span class="s2">&quot;django.core.mail.backends.smtp.EmailBackend&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;OPTIONS&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;host&quot;</span><span class="p">:</span> <span class="s2">&quot;mail.example.net&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;use_tls&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="c1"># port is not needed: it defaults to 587 with use_tls True.</span>
+            <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="s2">&quot;user@example.net&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;password&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p id="deprecated-email-settings">The complete list of deprecated <code class="docutils literal notranslate"><span class="pre">EMAIL_*</span></code> settings and where they should be
+moved in a <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> configuration is:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_BACKEND"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_BACKEND</span></code></a> becomes <code class="docutils literal notranslate"><span class="pre">&quot;BACKEND&quot;</span></code>. If your settings didn’t
+define <code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_BACKEND</span></code>, the default value was
+<code class="docutils literal notranslate"><span class="pre">&quot;django.core.mail.backends.smtp.EmailBackend&quot;</span></code> (which is also the default
+if a <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> configuration doesn’t specify the <code class="docutils literal notranslate"><span class="pre">&quot;BACKEND&quot;</span></code>).</p></li>
+<li><p><a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_FILE_PATH"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_FILE_PATH</span></code></a> becomes <code class="docutils literal notranslate"><span class="pre">&quot;file_path&quot;</span></code> in <code class="docutils literal notranslate"><span class="pre">&quot;OPTIONS&quot;</span></code> (with
+<code class="docutils literal notranslate"><span class="pre">&quot;BACKEND&quot;</span></code> set to <code class="docutils literal notranslate"><span class="pre">&quot;django.core.mail.backends.filebased.EmailBackend&quot;</span></code>).</p></li>
+<li><p><a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_HOST"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_HOST</span></code></a> becomes <code class="docutils literal notranslate"><span class="pre">&quot;host&quot;</span></code> in <code class="docutils literal notranslate"><span class="pre">&quot;OPTIONS&quot;</span></code>. A <code class="docutils literal notranslate"><span class="pre">&quot;host&quot;</span></code> is
+required for the SMTP email backend. If your settings didn’t define
+<code class="docutils literal notranslate"><span class="pre">EMAIL_HOST</span></code>, set <code class="docutils literal notranslate"><span class="pre">&quot;host&quot;</span></code> to <code class="docutils literal notranslate"><span class="pre">&quot;localhost&quot;</span></code> (the default value for the
+deprecated setting).</p></li>
+<li><p><a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_HOST_PASSWORD"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_HOST_PASSWORD</span></code></a> becomes <code class="docutils literal notranslate"><span class="pre">&quot;password&quot;</span></code> in <code class="docutils literal notranslate"><span class="pre">&quot;OPTIONS&quot;</span></code>.</p></li>
+<li><p><a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_HOST_USER"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_HOST_USER</span></code></a> becomes <code class="docutils literal notranslate"><span class="pre">&quot;username&quot;</span></code> in <code class="docutils literal notranslate"><span class="pre">&quot;OPTIONS&quot;</span></code>. (Note
+<code class="docutils literal notranslate"><span class="pre">&quot;username&quot;</span></code> doesn’t quite follow the naming pattern for the other
+deprecated settings.)</p></li>
+<li><p><a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_PORT"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_PORT</span></code></a> becomes <code class="docutils literal notranslate"><span class="pre">&quot;port&quot;</span></code> in <code class="docutils literal notranslate"><span class="pre">&quot;OPTIONS&quot;</span></code>. It can be omitted
+if the connection uses the default port for its security (465 for SSL, 587
+for TLS, or 25 for an unsecured SMTP connection).</p></li>
+<li><p><a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_SSL_CERTFILE"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_SSL_CERTFILE</span></code></a> becomes <code class="docutils literal notranslate"><span class="pre">&quot;ssl_certfile&quot;</span></code> in <code class="docutils literal notranslate"><span class="pre">&quot;OPTIONS&quot;</span></code>.</p></li>
+<li><p><a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_SSL_KEYFILE"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_SSL_KEYFILE</span></code></a> becomes <code class="docutils literal notranslate"><span class="pre">&quot;ssl_keyfile&quot;</span></code> in <code class="docutils literal notranslate"><span class="pre">&quot;OPTIONS&quot;</span></code>.</p></li>
+<li><p><a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_TIMEOUT"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_TIMEOUT</span></code></a> becomes <code class="docutils literal notranslate"><span class="pre">&quot;timeout&quot;</span></code> in <code class="docutils literal notranslate"><span class="pre">&quot;OPTIONS&quot;</span></code>.</p></li>
+<li><p><a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_USE_SSL"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_USE_SSL</span></code></a> becomes <code class="docutils literal notranslate"><span class="pre">&quot;use_ssl&quot;</span></code> in <code class="docutils literal notranslate"><span class="pre">&quot;OPTIONS&quot;</span></code>.</p></li>
+<li><p><a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_USE_TLS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_USE_TLS</span></code></a> becomes <code class="docutils literal notranslate"><span class="pre">&quot;use_tls&quot;</span></code> in <code class="docutils literal notranslate"><span class="pre">&quot;OPTIONS&quot;</span></code>.</p></li>
+</ul>
+<p>For third-party or custom email backends, the available <code class="docutils literal notranslate"><span class="pre">&quot;OPTIONS&quot;</span></code> depend on
+the backend. Refer to the third-party documentation, or for custom backends see
+<a class="reference internal" href="#migrating-to-mailers-email-backends"><span class="std std-ref">Migrating custom email backends</span></a> below.</p>
+<p>The <a class="reference internal" href="../topics/email.html#topic-email-configuration"><span class="std std-ref">Configuring email</span></a> topic has more information on the
+<code class="docutils literal notranslate"><span class="pre">MAILERS</span></code> setting and additional configuration examples.</p>
+</section>
+<section id="s-reusable-library-readiness">
+<span id="s-migrating-to-mailers-third-party"></span><span id="reusable-library-readiness"></span><span id="migrating-to-mailers-third-party"></span><h2>Reusable library readiness<a class="headerlink" href="#reusable-library-readiness" title="Link to this heading">¶</a></h2>
+<p>In most cases, third-party packages that send email through Django will
+continue working with projects whose settings have been upgraded to use
+<a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a>. (If they use any deprecated mail features, those will of
+course cause deprecation warnings.)</p>
+<p>There are two deprecated features that are <em>not</em> supported when
+<a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> is defined in a project’s settings:</p>
+<ul class="simple">
+<li><p>Trying to access any of the deprecated <code class="docutils literal notranslate"><span class="pre">EMAIL_*</span></code> settings on
+<code class="docutils literal notranslate"><span class="pre">django.conf.settings</span></code> (e.g., checking <code class="docutils literal notranslate"><span class="pre">settings.EMAIL_BACKEND</span></code> or using
+<code class="docutils literal notranslate"><span class="pre">settings.EMAIL_HOST_USER</span></code>).</p></li>
+<li><p>Calling <a class="reference internal" href="../topics/email.html#django.core.mail.get_connection" title="django.core.mail.get_connection"><code class="xref py py-func docutils literal notranslate"><span class="pre">mail.get_connection(&quot;path.to.EmailBackend&quot;)</span></code></a> with a specific backend path. (Other arguments to
+<code class="docutils literal notranslate"><span class="pre">get_connection()</span></code> are still supported, and will simply issue deprecation
+warnings when <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> is defined.)</p></li>
+</ul>
+<p>If a third-party package does either of those, projects that use it will not be
+able to change to the <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> setting until the package has been
+updated.</p>
+<section id="s-solving-not-available-when-mailers-is-defined-errors">
+<span id="solving-not-available-when-mailers-is-defined-errors"></span><h3>Solving “not available when MAILERS is defined” errors<a class="headerlink" href="#solving-not-available-when-mailers-is-defined-errors" title="Link to this heading">¶</a></h3>
+<p>If either of these errors are raised within a third-party package, that
+indicates it is not compatible with the <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> setting:</p>
+<ul class="simple">
+<li><p><code class="samp docutils literal notranslate"><span class="pre">AttributeError:</span> <span class="pre">&quot;The</span> <em><span class="pre">name</span></em> <span class="pre">setting</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">available</span> <span class="pre">when</span> <span class="pre">MAILERS</span> <span class="pre">is</span>
+<span class="pre">defined&quot;</span></code> where <em>name</em> is <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_BACKEND"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_BACKEND</span></code></a>, <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_HOST"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_HOST</span></code></a>,
+or one of the other deprecated settings.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RuntimeError:</span> <span class="pre">get_connection(backend,</span> <span class="pre">...)</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">supported</span> <span class="pre">with</span> <span class="pre">MAILERS.</span></code></p></li>
+</ul>
+<p>If you see these errors, check if a newer version of that dependency is
+available. If not (and if there are no alternatives to that package), you will
+need to remove <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> from your settings and replace it with the
+equivalent <a class="reference internal" href="#deprecated-email-settings"><span class="std std-ref">deprecated email settings</span></a> until
+the package has been updated.</p>
+<p>If those errors are coming from your own code, see the other sections in this
+migration guide for recommended updates.</p>
+</section>
+</section>
+<section id="s-replacing-get-connection-and-connection-arguments">
+<span id="s-migrating-to-mailers-get-connection"></span><span id="replacing-get-connection-and-connection-arguments"></span><span id="migrating-to-mailers-get-connection"></span><h2>Replacing <code class="docutils literal notranslate"><span class="pre">get_connection()</span></code> and <code class="docutils literal notranslate"><span class="pre">connection</span></code> arguments<a class="headerlink" href="#replacing-get-connection-and-connection-arguments" title="Link to this heading">¶</a></h2>
+<p>The replacements for the deprecated <a class="reference internal" href="../topics/email.html#django.core.mail.get_connection" title="django.core.mail.get_connection"><code class="xref py py-func docutils literal notranslate"><span class="pre">mail.get_connection()</span></code></a> function
+and <code class="docutils literal notranslate"><span class="pre">connection</span></code> arguments to other mail functions depend on how and why
+the connections are being created:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_connection()</span></code> called with no arguments</p>
+<p>Replace with <a class="reference internal" href="../topics/email.html#django.core.mail.mailers.default" title="django.core.mail.mailers.default"><code class="xref py py-data docutils literal notranslate"><span class="pre">mailers.default</span></code></a>. For example, update this code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">connection</span> <span class="o">=</span> <span class="n">mail</span><span class="o">.</span><span class="n">get_connection</span><span class="p">()</span>
+<span class="n">connection</span><span class="o">.</span><span class="n">send_messages</span><span class="p">([</span><span class="n">email1</span><span class="p">,</span> <span class="n">email2</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>To:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">connection</span> <span class="o">=</span> <span class="n">mail</span><span class="o">.</span><span class="n">mailers</span><span class="o">.</span><span class="n">default</span>
+<span class="n">connection</span><span class="o">.</span><span class="n">send_messages</span><span class="p">([</span><span class="n">email1</span><span class="p">,</span> <span class="n">email2</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Note that <code class="docutils literal notranslate"><span class="pre">mailers.default</span></code> <em>is</em> the default for Django’s mail-sending
+functions. Code like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mail</span><span class="o">.</span><span class="n">send_mail</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">mail</span><span class="o">.</span><span class="n">get_connection</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>can be updated to:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mail</span><span class="o">.</span><span class="n">send_mail</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># No connection arg needed.</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_connection(fail_silently=True)</span></code></p>
+<p>See <a class="reference internal" href="#migrating-to-mailers-fail-silently"><span class="std std-ref">Replacing fail_silently</span></a>.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_connection(...)</span></code> called with any other arguments</p>
+<p>Define a custom <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> configuration with the desired backend
+and options. Then refer to it in the <code class="docutils literal notranslate"><span class="pre">using</span></code> argument when sending mail,
+or obtain an email backend instance from <a class="reference internal" href="../topics/email.html#django.core.mail.mailers" title="django.core.mail.mailers"><code class="xref py py-data docutils literal notranslate"><span class="pre">mail.mailers</span></code></a> with the
+configuration name.</p>
+<p>For example, to upgrade this code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">connection</span> <span class="o">=</span> <span class="n">mail</span><span class="o">.</span><span class="n">get_connection</span><span class="p">(</span>
+    <span class="s2">&quot;path.to.custom.EmailBackend&quot;</span><span class="p">,</span> <span class="n">option1</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">option2</span><span class="o">=</span><span class="s2">&quot;value&quot;</span>
+<span class="p">)</span>
+<span class="n">mail</span><span class="o">.</span><span class="n">send_mail</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="n">connection</span><span class="p">)</span>
+<span class="n">connection</span><span class="o">.</span><span class="n">send_messages</span><span class="p">([</span><span class="n">email1</span><span class="p">,</span> <span class="n">email2</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Define a custom <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> configuration in your settings:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MAILERS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="p">},</span>
+    <span class="s2">&quot;custom&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;BACKEND&quot;</span><span class="p">:</span> <span class="s2">&quot;path.to.custom.EmailBackend&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;OPTIONS&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;option1&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;option2&quot;</span><span class="p">:</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>And then use it like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mail</span><span class="o">.</span><span class="n">send_mail</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">using</span><span class="o">=</span><span class="s2">&quot;custom&quot;</span><span class="p">)</span>
+<span class="n">mail</span><span class="o">.</span><span class="n">mailers</span><span class="p">[</span><span class="s2">&quot;custom&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">send_messages</span><span class="p">([</span><span class="n">email1</span><span class="p">,</span> <span class="n">email2</span><span class="p">])</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+<section id="s-replacing-fail-silently">
+<span id="s-migrating-to-mailers-fail-silently"></span><span id="replacing-fail-silently"></span><span id="migrating-to-mailers-fail-silently"></span><h2>Replacing <code class="docutils literal notranslate"><span class="pre">fail_silently</span></code><a class="headerlink" href="#replacing-fail-silently" title="Link to this heading">¶</a></h2>
+<p>The deprecated <code class="docutils literal notranslate"><span class="pre">fail_silently</span></code> arguments to <a class="reference internal" href="../topics/email.html#django.core.mail.send_mail" title="django.core.mail.send_mail"><code class="xref py py-func docutils literal notranslate"><span class="pre">send_mail()</span></code></a>,
+<a class="reference internal" href="../topics/email.html#django.core.mail.send_mass_mail" title="django.core.mail.send_mass_mail"><code class="xref py py-func docutils literal notranslate"><span class="pre">send_mass_mail()</span></code></a>, <a class="reference internal" href="../topics/email.html#django.core.mail.mail_admins" title="django.core.mail.mail_admins"><code class="xref py py-func docutils literal notranslate"><span class="pre">mail_admins()</span></code></a>, <a class="reference internal" href="../topics/email.html#django.core.mail.mail_managers" title="django.core.mail.mail_managers"><code class="xref py py-func docutils literal notranslate"><span class="pre">mail_managers()</span></code></a>, and
+<a class="reference internal" href="../topics/email.html#django.core.mail.EmailMessage.send" title="django.core.mail.EmailMessage.send"><code class="xref py py-meth docutils literal notranslate"><span class="pre">EmailMessage.send()</span></code></a> can be replaced in several ways. Existing usage
+seems to have several different expectations for the behavior, many of which
+don’t match the actual (and email backend-dependent) implementation. Consider
+removing <code class="docutils literal notranslate"><span class="pre">fail_silently</span></code> entirely if there is not a specific need for it.</p>
+<p>Calls with <code class="docutils literal notranslate"><span class="pre">fail_silently=True</span></code> should be updated with one of these options,
+depending on the caller’s intent:</p>
+<ul>
+<li><p>To send a message if email has been configured but avoid raising an error
+if it hasn’t (e.g., in a reusable library), wrap the send call in <code class="docutils literal notranslate"><span class="pre">try:</span></code> /
+<code class="docutils literal notranslate"><span class="pre">except</span> <span class="pre">mail.MailerDoesNotExist:</span> <span class="pre">pass</span></code>.</p></li>
+<li><p>To ignore <em>all</em> exceptions (e.g., to avoid cascading failures in an error
+handler that sends mail), wrap the send call in <code class="docutils literal notranslate"><span class="pre">try:</span></code> / <code class="docutils literal notranslate"><span class="pre">except</span>
+<span class="pre">Exception:</span> <span class="pre">pass</span></code>.</p></li>
+<li><p>To ignore only SMTP-related errors, wrap the send call in <code class="docutils literal notranslate"><span class="pre">try</span></code> /
+<code class="docutils literal notranslate"><span class="pre">except</span> <span class="pre">OSError:</span> <span class="pre">pass</span></code>. Note that this ignores both transient network
+glitches <em>and</em> SMTP configuration problems (just like the existing SMTP
+email backend <code class="docutils literal notranslate"><span class="pre">fail_silently</span></code> implementation).</p></li>
+<li><p>To ignore end user typos in <code class="docutils literal notranslate"><span class="pre">to</span></code> addresses and other delivery problems,
+remove the <code class="docutils literal notranslate"><span class="pre">fail_silently</span></code> argument. Recipient errors are not generally
+detected at send time, so using <code class="docutils literal notranslate"><span class="pre">fail_silently</span></code> for this purpose doesn’t
+accomplish anything and could mask other problems like configuration errors.</p>
+<p>(In <em>local delivery</em> configurations, SMTP servers may report some recipient
+errors at send time. If you are using <code class="docutils literal notranslate"><span class="pre">fail_silently</span></code> specifically to
+ignore those errors, consider instead intercepting
+<a class="reference external" href="https://docs.python.org/3/library/smtplib.html#smtplib.SMTPRecipientsRefused" title="(in Python v3.14)"><code class="xref py py-exc docutils literal notranslate"><span class="pre">SMTPRecipientsRefused</span></code></a> and/or
+<a class="reference external" href="https://docs.python.org/3/library/smtplib.html#smtplib.SMTPResponseException" title="(in Python v3.14)"><code class="xref py py-exc docutils literal notranslate"><span class="pre">SMTPResponseException</span></code></a>s with particular <code class="docutils literal notranslate"><span class="pre">smtp_code</span></code>
+values as a more precise filter.)</p>
+</li>
+<li><p>To create an email configuration that ignores certain backend-dependent
+errors and reuse it for multiple sending operations, create a custom
+<a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> configuration with <code class="docutils literal notranslate"><span class="pre">&quot;fail_silently&quot;:</span> <span class="pre">True</span></code> in the
+<a class="reference internal" href="../ref/settings.html#std-setting-MAILERS-OPTIONS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">&quot;OPTIONS&quot;</span></code></a>, then refer to that configuration
+with <code class="docutils literal notranslate"><span class="pre">using</span></code> in the send call.</p></li>
+</ul>
+<p>Calls with <code class="docutils literal notranslate"><span class="pre">fail_silently=False</span></code> should be updated to remove the
+<code class="docutils literal notranslate"><span class="pre">fail_silently</span></code> arg, as that is the default.</p>
+<p>If you use <a class="reference internal" href="../ref/logging.html#django.utils.log.AdminEmailHandler" title="django.utils.log.AdminEmailHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminEmailHandler</span></code></a> or <a class="reference internal" href="../ref/middleware.html#django.middleware.common.BrokenLinkEmailsMiddleware" title="django.middleware.common.BrokenLinkEmailsMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">BrokenLinkEmailsMiddleware</span></code></a>
+and rely on their previous fail-silent behavior, see
+<a class="reference internal" href="#migrating-to-mailers-error-reporting"><span class="std std-ref">Ignoring transient failures in error reporting</span></a>.</p>
+</section>
+<section id="s-migrating-custom-email-backends">
+<span id="s-migrating-to-mailers-email-backends"></span><span id="migrating-custom-email-backends"></span><span id="migrating-to-mailers-email-backends"></span><h2>Migrating custom email backends<a class="headerlink" href="#migrating-custom-email-backends" title="Link to this heading">¶</a></h2>
+<p>Custom <code class="docutils literal notranslate"><span class="pre">EmailBackend</span></code> implementations may need to be updated for
+compatibility with mailers.</p>
+<ul class="simple">
+<li><p>In the backend’s <code class="docutils literal notranslate"><span class="pre">__init__()</span></code> method, accept explicit keyword arguments for
+all configuration options that can come from <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS-OPTIONS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">&quot;OPTIONS&quot;</span></code></a>. Backends that use custom settings for configuration can
+continue to do so (or not, as they choose), but keyword arguments should take
+precedence over settings.</p></li>
+<li><p>Accept variable <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code> and pass them to superclass init. (This will
+include a new <code class="docutils literal notranslate"><span class="pre">alias</span></code> argument which must be passed to the superclass.)
+Ensure that any <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code> used by the backend are <em>not</em> passed to
+superclass init, as that would generate an <code class="docutils literal notranslate"><span class="pre">InvalidMailer</span></code> error for
+unknown OPTIONS.</p></li>
+<li><p>Backends must now handle <code class="docutils literal notranslate"><span class="pre">fail_silently</span></code> themselves, if they want to
+support it. There is no requirement to support <code class="docutils literal notranslate"><span class="pre">fail_silently</span></code>, and
+backends that don’t offer it should eliminate that keyword argument. (Do not
+pass an explicit <code class="docutils literal notranslate"><span class="pre">fail_silently</span></code> arg to superclass init.)</p></li>
+<li><p>Do not accept variable positional <code class="docutils literal notranslate"><span class="pre">*args</span></code> or pass them to superclass init.</p></li>
+</ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">BaseEmailBackend</span></code> superclass now initializes an <code class="docutils literal notranslate"><span class="pre">alias</span></code> attribute.
+This is useful for error messages (e.g., <code class="docutils literal notranslate"><span class="pre">raise</span> <span class="pre">InvalidMailer(f&quot;Bad</span> <span class="pre">host</span>
+<span class="pre">{host}&quot;,</span> <span class="pre">alias=self.alias)</span></code>), but should not be used for accessing
+<code class="docutils literal notranslate"><span class="pre">settings.MAILERS</span></code> directly. All OPTIONS for a mailer configuration are
+passed to backend init as keyword arguments.</p>
+<p>For reusable libraries that want to support compatibility with deprecated mail
+functions and settings, or that support older Django versions:</p>
+<ul class="simple">
+<li><p>A backend can detect it is being initialized without <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> by
+checking if <code class="docutils literal notranslate"><span class="pre">self.alias</span> <span class="pre">is</span> <span class="pre">None</span></code>. (Django’s built-in backends check this to
+decide whether deprecated settings should be used.) Libraries supporting
+older Django versions will need to use <code class="docutils literal notranslate"><span class="pre">getattr(self,</span> <span class="pre">&quot;alias&quot;,</span> <span class="pre">None)</span></code>.</p></li>
+<li><p>Backends that borrow Django’s SMTP email settings like <a class="reference internal" href="../ref/settings.html#std-setting-EMAIL_HOST"><code class="xref std std-setting docutils literal notranslate"><span class="pre">EMAIL_HOST</span></code></a>
+must <em>not</em> try to access them when <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> is in use (<code class="docutils literal notranslate"><span class="pre">self.alias</span>
+<span class="pre">is</span> <span class="pre">not</span> <span class="pre">None</span></code>), as this will cause a “not available when MAILERS is defined”
+<code class="docutils literal notranslate"><span class="pre">AttributeError</span></code>.</p></li>
+<li><p>Libraries supporting multiple Django versions can identify support for
+mailers with either <code class="docutils literal notranslate"><span class="pre">hasattr(django.core.mail,</span> <span class="pre">&quot;mailers&quot;)</span></code> or
+<code class="docutils literal notranslate"><span class="pre">django.VERSION</span> <span class="pre">&gt;=</span> <span class="pre">(6,</span> <span class="pre">1)</span></code>.</p></li>
+</ul>
+</section>
+<section id="s-replacing-auth-user-and-auth-password">
+<span id="s-migrating-to-mailers-auth"></span><span id="replacing-auth-user-and-auth-password"></span><span id="migrating-to-mailers-auth"></span><h2>Replacing <code class="docutils literal notranslate"><span class="pre">auth_user</span></code> and <code class="docutils literal notranslate"><span class="pre">auth_password</span></code><a class="headerlink" href="#replacing-auth-user-and-auth-password" title="Link to this heading">¶</a></h2>
+<p>The deprecated <code class="docutils literal notranslate"><span class="pre">auth_user</span></code> and <code class="docutils literal notranslate"><span class="pre">auth_password</span></code> arguments to
+<a class="reference internal" href="../topics/email.html#django.core.mail.send_mail" title="django.core.mail.send_mail"><code class="xref py py-func docutils literal notranslate"><span class="pre">send_mail()</span></code></a> and <a class="reference internal" href="../topics/email.html#django.core.mail.send_mass_mail" title="django.core.mail.send_mass_mail"><code class="xref py py-func docutils literal notranslate"><span class="pre">send_mass_mail()</span></code></a> can be replaced by defining a
+custom <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> configuration with
+<code class="docutils literal notranslate"><span class="pre">&quot;username&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;password&quot;</span></code> <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS-OPTIONS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">&quot;OPTIONS&quot;</span></code></a>, and
+refer to that configuration with the <code class="docutils literal notranslate"><span class="pre">using</span></code> argument when sending mail.</p>
+<p>For example, to upgrade:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mail</span><span class="o">.</span><span class="n">send_mail</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">auth_user</span><span class="o">=</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span> <span class="n">auth_password</span><span class="o">=</span><span class="s2">&quot;admin-password&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Add a custom <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> configuration in your settings:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MAILERS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># Existing default configuration.</span>
+    <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;OPTIONS&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;host&quot;</span><span class="p">:</span> <span class="s2">&quot;smtp.example.com&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="s2">&quot;default-user&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;default-password&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+    <span class="c1"># Duplicate the default configuration, changing the auth.</span>
+    <span class="s2">&quot;admin-config&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;OPTIONS&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;host&quot;</span><span class="p">:</span> <span class="s2">&quot;smtp.example.com&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="s2">&quot;admin&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;admin-password&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>And then refer to it when sending:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mail</span><span class="o">.</span><span class="n">send_mail</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">using</span><span class="o">=</span><span class="s2">&quot;admin-config&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="s-updating-adminemailhandler-email-backend">
+<span id="s-migrating-to-mailers-adminemailhandler"></span><span id="updating-adminemailhandler-email-backend"></span><span id="migrating-to-mailers-adminemailhandler"></span><h2>Updating AdminEmailHandler <code class="docutils literal notranslate"><span class="pre">email_backend</span></code><a class="headerlink" href="#updating-adminemailhandler-email-backend" title="Link to this heading">¶</a></h2>
+<p>The deprecated <code class="docutils literal notranslate"><span class="pre">email_backend</span></code> argument to the logging
+<a class="reference internal" href="../ref/logging.html#django.utils.log.AdminEmailHandler" title="django.utils.log.AdminEmailHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminEmailHandler</span></code></a> can be replaced with a custom
+<a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> configuration, referring to it with the <code class="docutils literal notranslate"><span class="pre">using</span></code>
+argument.</p>
+<p>For example, if your settings include:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">LOGGING</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># ...</span>
+    <span class="s2">&quot;handlers&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;mail_admins&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="s2">&quot;django.utils.log.AdminEmailHandler&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;email_backend&quot;</span><span class="p">:</span> <span class="s2">&quot;third.party.EmailBackend&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+    <span class="c1"># ...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Replace that with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">LOGGING</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># ...</span>
+    <span class="s2">&quot;handlers&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;mail_admins&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="s2">&quot;django.utils.log.AdminEmailHandler&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;using&quot;</span><span class="p">:</span> <span class="s2">&quot;admin-logging&quot;</span><span class="p">,</span>  <span class="c1"># defined in MAILERS</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+    <span class="c1"># ...</span>
+<span class="p">}</span>
+
+<span class="n">MAILERS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="p">},</span>
+    <span class="s2">&quot;admin-logging&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;BACKEND&quot;</span><span class="p">:</span> <span class="s2">&quot;third.party.EmailBackend&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="s-ignoring-transient-failures-in-error-reporting">
+<span id="s-migrating-to-mailers-error-reporting"></span><span id="ignoring-transient-failures-in-error-reporting"></span><span id="migrating-to-mailers-error-reporting"></span><h2>Ignoring transient failures in error reporting<a class="headerlink" href="#ignoring-transient-failures-in-error-reporting" title="Link to this heading">¶</a></h2>
+<p>Django includes two features that report errors via email:
+<a class="reference internal" href="../ref/logging.html#django.utils.log.AdminEmailHandler" title="django.utils.log.AdminEmailHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminEmailHandler</span></code></a> and <a class="reference internal" href="../ref/middleware.html#django.middleware.common.BrokenLinkEmailsMiddleware" title="django.middleware.common.BrokenLinkEmailsMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">BrokenLinkEmailsMiddleware</span></code></a>. In
+earlier releases, those features used the deprecated <a class="reference internal" href="#migrating-to-mailers-fail-silently"><span class="std std-ref">fail_silently</span></a> argument. Starting in Django 2028 – or
+immediately once the <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a> setting is defined – those features no
+longer use <code class="docutils literal notranslate"><span class="pre">fail_silently</span></code> so no longer ignore certain backend-specific
+errors.</p>
+<p>This may affect projects that use those features with an unreliable SMTP
+connection and rely on silently ignoring temporary network failures (and
+certain SMTP configuration errors). If you want to continue dropping error
+notification emails that cannot be sent, define a <a class="reference internal" href="../ref/settings.html#std-setting-MAILERS"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MAILERS</span></code></a>
+configuration with the <code class="docutils literal notranslate"><span class="pre">&quot;fail_silently&quot;</span></code> option enabled for use by those
+error handlers:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MAILERS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="p">},</span>
+    <span class="s2">&quot;admin-logging&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;BACKEND&quot;</span><span class="p">:</span> <span class="s2">&quot;django.core.mail.backends.smtp.EmailBackend&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;OPTIONS&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="c1"># ... other SMTP options ...</span>
+            <span class="s2">&quot;fail_silently&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>To use this for <a class="reference internal" href="../ref/logging.html#django.utils.log.AdminEmailHandler" title="django.utils.log.AdminEmailHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdminEmailHandler</span></code></a>, set the <code class="docutils literal notranslate"><span class="pre">&quot;using&quot;</span></code> option in the
+<a class="reference internal" href="../ref/settings.html#std-setting-LOGGING"><code class="xref std std-setting docutils literal notranslate"><span class="pre">LOGGING</span></code></a> config as shown in the previous section.</p>
+<p>To use this for <a class="reference internal" href="../ref/middleware.html#django.middleware.common.BrokenLinkEmailsMiddleware" title="django.middleware.common.BrokenLinkEmailsMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">BrokenLinkEmailsMiddleware</span></code></a>, create a subclass that
+defines <code class="docutils literal notranslate"><span class="pre">using</span></code>, and then specify the path to that subclass in your
+<a class="reference internal" href="../ref/settings.html#std-setting-MIDDLEWARE"><code class="xref std std-setting docutils literal notranslate"><span class="pre">MIDDLEWARE</span></code></a> setting:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.middleware.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">BrokenLinkEmailsMiddleware</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomBrokenLinkEmailsMiddleware</span><span class="p">(</span><span class="n">BrokenLinkEmailsMiddleware</span><span class="p">):</span>
+    <span class="n">using</span> <span class="o">=</span> <span class="s2">&quot;admin-logging&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Migrating email to mailers</a><ul>
+<li><a class="reference internal" href="#migrating-settings">Migrating settings</a></li>
+<li><a class="reference internal" href="#reusable-library-readiness">Reusable library readiness</a><ul>
+<li><a class="reference internal" href="#solving-not-available-when-mailers-is-defined-errors">Solving “not available when MAILERS is defined” errors</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#replacing-get-connection-and-connection-arguments">Replacing <code class="docutils literal notranslate"><span class="pre">get_connection()</span></code> and <code class="docutils literal notranslate"><span class="pre">connection</span></code> arguments</a></li>
+<li><a class="reference internal" href="#replacing-fail-silently">Replacing <code class="docutils literal notranslate"><span class="pre">fail_silently</span></code></a></li>
+<li><a class="reference internal" href="#migrating-custom-email-backends">Migrating custom email backends</a></li>
+<li><a class="reference internal" href="#replacing-auth-user-and-auth-password">Replacing <code class="docutils literal notranslate"><span class="pre">auth_user</span></code> and <code class="docutils literal notranslate"><span class="pre">auth_password</span></code></a></li>
+<li><a class="reference internal" href="#updating-adminemailhandler-email-backend">Updating AdminEmailHandler <code class="docutils literal notranslate"><span class="pre">email_backend</span></code></a></li>
+<li><a class="reference internal" href="#ignoring-transient-failures-in-error-reporting">Ignoring transient failures in error reporting</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="custom-shell.html"
+                          title="previous chapter">How to customize the <code class="docutils literal notranslate"><span class="pre">shell</span></code> command</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="../faq/index.html"
+                          title="next chapter">Django FAQ</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/howto/mailers-migration.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="custom-shell.html" title="How to customize the &lt;code class=&#34;docutils literal notranslate&#34;&gt;&lt;span class=&#34;pre&#34;&gt;shell&lt;/span&gt;&lt;/code&gt; command">previous</a>
+     |
+    <a href="index.html" title="How-to guides" accesskey="U">up</a>
+   |
+    <a href="../faq/index.html" title="Django FAQ">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

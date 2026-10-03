@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Content Security Policy &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../_static/default.css?v=bf4d74af" />
+    <script src="../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Cross Site Request Forgery protection" href="csrf.html" />
+    <link rel="prev" title="The syndication feed framework" href="contrib/syndication.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Module index" href="../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="contrib/syndication.html" title="The syndication feed framework">previous</a>
+     |
+    <a href="index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="csrf.html" title="Cross Site Request Forgery protection">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="ref-csp">
+            
+  <section id="s-content-security-policy">
+<span id="content-security-policy"></span><h1>Content Security Policy<a class="headerlink" href="#content-security-policy" title="Link to this heading">¶</a></h1>
+<div class="versionadded">
+<span class="title">New in Django 6.0.</span> </div>
+<p id="module-django.middleware.csp">Content Security Policy (CSP) is a web security standard that helps prevent
+content injection attacks by restricting the sources from which content can be
+loaded. It plays an important role in a comprehensive <a class="reference internal" href="../topics/security.html#security-csp"><span class="std std-ref">security strategy</span></a>.</p>
+<p>For configuration instructions in a Django project, see the <a class="reference internal" href="../howto/csp.html#csp-config"><span class="std std-ref">Using CSP</span></a> documentation. For an HTTP guide about CSP, see the <a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP">MDN Guide on
+CSP</a>.</p>
+<section id="s-overview">
+<span id="s-csp-overview"></span><span id="overview"></span><span id="csp-overview"></span><h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<p>The <a class="reference external" href="https://www.w3.org/TR/CSP3/">Content-Security-Policy specification</a>
+defines two complementary headers:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Content-Security-Policy</span></code>: Enforces the CSP policy, blocking content that
+violates the defined directives.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Content-Security-Policy-Report-Only</span></code>: Reports CSP violations without
+blocking content, allowing for non-intrusive testing.</p></li>
+</ul>
+<p>Each policy is composed of one or more directives and their values, which
+together instruct the browser on how to handle specific types of content.</p>
+<p>When the <a class="reference internal" href="middleware.html#django.middleware.csp.ContentSecurityPolicyMiddleware" title="django.middleware.csp.ContentSecurityPolicyMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">ContentSecurityPolicyMiddleware</span></code></a> is
+enabled, Django automatically builds and attaches the appropriate headers to
+each response based on the configured <a class="reference internal" href="#csp-settings"><span class="std std-ref">settings</span></a>, unless
+they have already been set by another layer.</p>
+</section>
+<section id="s-settings">
+<span id="s-csp-settings"></span><span id="settings"></span><span id="csp-settings"></span><h2>Settings<a class="headerlink" href="#settings" title="Link to this heading">¶</a></h2>
+<p>The <a class="reference internal" href="middleware.html#django.middleware.csp.ContentSecurityPolicyMiddleware" title="django.middleware.csp.ContentSecurityPolicyMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">ContentSecurityPolicyMiddleware</span></code></a> is
+configured using the following settings:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="settings.html#std-setting-SECURE_CSP"><code class="xref std std-setting docutils literal notranslate"><span class="pre">SECURE_CSP</span></code></a>: defines the <strong>enforced Content Security Policy</strong>.</p></li>
+<li><p><a class="reference internal" href="settings.html#std-setting-SECURE_CSP_REPORT_ONLY"><code class="xref std std-setting docutils literal notranslate"><span class="pre">SECURE_CSP_REPORT_ONLY</span></code></a>: defines a <strong>report-only Content Security
+Policy</strong>.</p></li>
+</ul>
+<div class="admonition-these-settings-can-be-used-independently-or-together admonition">
+<p class="admonition-title">These settings can be used independently or together</p>
+<ul class="simple">
+<li><p>Use <a class="reference internal" href="settings.html#std-setting-SECURE_CSP"><code class="xref std std-setting docutils literal notranslate"><span class="pre">SECURE_CSP</span></code></a> alone to enforce a policy that has already been
+tested and verified.</p></li>
+<li><p>Use <a class="reference internal" href="settings.html#std-setting-SECURE_CSP_REPORT_ONLY"><code class="xref std std-setting docutils literal notranslate"><span class="pre">SECURE_CSP_REPORT_ONLY</span></code></a> on its own to evaluate a new policy
+without disrupting site behavior. This mode does not block violations, it
+only logs them. It’s useful for testing and monitoring, but provides no
+protection against active threats.</p></li>
+<li><p>Use <em>both</em> to maintain an enforced baseline while experimenting with
+changes. Even for well-established policies, continuing to collect reports
+can help detect regressions, unexpected changes in behavior, or
+potential tampering in production environments.</p></li>
+</ul>
+</div>
+</section>
+<section id="s-policy-violation-reports">
+<span id="s-csp-reports"></span><span id="policy-violation-reports"></span><span id="csp-reports"></span><h2>Policy violation reports<a class="headerlink" href="#policy-violation-reports" title="Link to this heading">¶</a></h2>
+<p>When a CSP violation occurs, browsers typically log details to the developer
+console, providing immediate feedback during development. To also receive these
+reports programmatically, the policy must include a <a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy#reporting_directives">reporting directive</a>
+such as <code class="docutils literal notranslate"><span class="pre">report-uri</span></code> that specifies where violation data should be sent.</p>
+<p>Django supports configuring these directives via the
+<a class="reference internal" href="settings.html#std-setting-SECURE_CSP_REPORT_ONLY"><code class="xref std std-setting docutils literal notranslate"><span class="pre">SECURE_CSP_REPORT_ONLY</span></code></a> settings, but reports will only be issued by
+the browser if the policy explicitly includes a valid reporting directive.</p>
+<p>Django does not provide built-in functionality to receive, store, or process
+violation reports. To collect and analyze them, you must implement your own
+reporting endpoint or integrate with a third-party monitoring service.</p>
+</section>
+<section id="s-csp-constants">
+<span id="s-id1"></span><span id="csp-constants"></span><span id="id1"></span><h2>CSP constants<a class="headerlink" href="#csp-constants" title="Link to this heading">¶</a></h2>
+<p>Django provides predefined constants representing common CSP source expression
+keywords such as <code class="docutils literal notranslate"><span class="pre">'self'</span></code>, <code class="docutils literal notranslate"><span class="pre">'none'</span></code>, and <code class="docutils literal notranslate"><span class="pre">'unsafe-inline'</span></code>. These
+constants are intended for use in the directive values defined in the settings.</p>
+<p>They are available through the <a class="reference internal" href="#django.utils.csp.CSP" title="django.utils.csp.CSP"><code class="xref py py-class docutils literal notranslate"><span class="pre">CSP</span></code></a> enum, and using
+them is recommended over raw strings. This helps avoid common mistakes such as
+typos, improper quoting, or inconsistent formatting, and ensures compliance
+with the CSP specification.</p>
+<dl class="py class" id="module-django.utils.csp">
+<dt class="sig sig-object py" id="django.utils.csp.CSP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CSP</span></span><a class="reference external" href="https://github.com/django/django/blob/stable/6.1.x/django/utils/csp.py#L11"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#django.utils.csp.CSP" title="Link to this definition">¶</a></dt>
+<dd><p>Enum providing standardized constants for common CSP source expressions.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.utils.csp.CSP.NONE">
+<span class="sig-name descname"><span class="pre">NONE</span></span><a class="headerlink" href="#django.utils.csp.CSP.NONE" title="Link to this definition">¶</a></dt>
+<dd><p>Represents <code class="docutils literal notranslate"><span class="pre">'none'</span></code>. Blocks loading resources for the given directive.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.utils.csp.CSP.REPORT_SAMPLE">
+<span class="sig-name descname"><span class="pre">REPORT_SAMPLE</span></span><a class="headerlink" href="#django.utils.csp.CSP.REPORT_SAMPLE" title="Link to this definition">¶</a></dt>
+<dd><p>Represents <code class="docutils literal notranslate"><span class="pre">'report-sample'</span></code>. Instructs the browser to include a sample
+of the violating code in reports. Note that this may expose sensitive
+data.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.utils.csp.CSP.SELF">
+<span class="sig-name descname"><span class="pre">SELF</span></span><a class="headerlink" href="#django.utils.csp.CSP.SELF" title="Link to this definition">¶</a></dt>
+<dd><p>Represents <code class="docutils literal notranslate"><span class="pre">'self'</span></code>. Allows loading resources from the same origin
+(same scheme, host, and port).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.utils.csp.CSP.STRICT_DYNAMIC">
+<span class="sig-name descname"><span class="pre">STRICT_DYNAMIC</span></span><a class="headerlink" href="#django.utils.csp.CSP.STRICT_DYNAMIC" title="Link to this definition">¶</a></dt>
+<dd><p>Represents <code class="docutils literal notranslate"><span class="pre">'strict-dynamic'</span></code>. Allows execution of scripts loaded by a
+trusted script (e.g., one with a valid nonce or hash), without needing
+<code class="docutils literal notranslate"><span class="pre">'unsafe-inline'</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.utils.csp.CSP.UNSAFE_EVAL">
+<span class="sig-name descname"><span class="pre">UNSAFE_EVAL</span></span><a class="headerlink" href="#django.utils.csp.CSP.UNSAFE_EVAL" title="Link to this definition">¶</a></dt>
+<dd><p>Represents <code class="docutils literal notranslate"><span class="pre">'unsafe-eval'</span></code>. Allows use of <code class="docutils literal notranslate"><span class="pre">eval()</span></code> and similar
+JavaScript functions. Strongly discouraged.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.utils.csp.CSP.UNSAFE_HASHES">
+<span class="sig-name descname"><span class="pre">UNSAFE_HASHES</span></span><a class="headerlink" href="#django.utils.csp.CSP.UNSAFE_HASHES" title="Link to this definition">¶</a></dt>
+<dd><p>Represents <code class="docutils literal notranslate"><span class="pre">'unsafe-hashes'</span></code>. Allows inline event handlers and some
+<code class="docutils literal notranslate"><span class="pre">javascript:</span></code> URIs when their content hashes match a policy rule.
+Requires CSP Level 3+.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.utils.csp.CSP.UNSAFE_INLINE">
+<span class="sig-name descname"><span class="pre">UNSAFE_INLINE</span></span><a class="headerlink" href="#django.utils.csp.CSP.UNSAFE_INLINE" title="Link to this definition">¶</a></dt>
+<dd><p>Represents <code class="docutils literal notranslate"><span class="pre">'unsafe-inline'</span></code>. Allows execution of inline scripts,
+styles, and <code class="docutils literal notranslate"><span class="pre">javascript:</span></code> URLs. Generally discouraged, especially for
+scripts.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.utils.csp.CSP.WASM_UNSAFE_EVAL">
+<span class="sig-name descname"><span class="pre">WASM_UNSAFE_EVAL</span></span><a class="headerlink" href="#django.utils.csp.CSP.WASM_UNSAFE_EVAL" title="Link to this definition">¶</a></dt>
+<dd><p>Represents <code class="docutils literal notranslate"><span class="pre">'wasm-unsafe-eval'</span></code>. Permits compilation and execution of
+WebAssembly code without enabling <code class="docutils literal notranslate"><span class="pre">'unsafe-eval'</span></code> for scripts.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.utils.csp.CSP.NONCE">
+<span class="sig-name descname"><span class="pre">NONCE</span></span><a class="headerlink" href="#django.utils.csp.CSP.NONCE" title="Link to this definition">¶</a></dt>
+<dd><p>Django-specific placeholder value (<code class="docutils literal notranslate"><span class="pre">&quot;&lt;CSP_NONCE_SENTINEL&gt;&quot;</span></code>) used in
+<code class="docutils literal notranslate"><span class="pre">script-src</span></code> or <code class="docutils literal notranslate"><span class="pre">style-src</span></code> directives to activate nonce-based CSP.
+This string is replaced at runtime by the
+<a class="reference internal" href="middleware.html#django.middleware.csp.ContentSecurityPolicyMiddleware" title="django.middleware.csp.ContentSecurityPolicyMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">ContentSecurityPolicyMiddleware</span></code></a> with a
+secure, random nonce that is generated for each request. See detailed
+explanation in <a class="reference internal" href="#csp-nonce"><span class="std std-ref">Nonce usage</span></a>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="s-module-django.views.decorators.csp">
+<span id="s-decorators"></span><span id="module-django.views.decorators.csp"></span><span id="decorators"></span><h2>Decorators<a class="headerlink" href="#module-django.views.decorators.csp" title="Link to this heading">¶</a></h2>
+<p>Django provides decorators to control the Content Security Policy headers on a
+per-view basis. These allow overriding or disabling the enforced or report-only
+policy for specific views, providing fine-grained control when the global
+settings are not sufficient. Applying these overrides fully replaces the base
+CSP: they do not merge with existing rules. They can be used alongside the
+constants defined in <a class="reference internal" href="#django.utils.csp.CSP" title="django.utils.csp.CSP"><code class="xref py py-class docutils literal notranslate"><span class="pre">CSP</span></code></a>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Weakening or disabling a CSP policy on any page can compromise the security
+of the entire site. Because of the “same origin” policy, an attacker could
+exploit a vulnerability on one page to access other parts of the site.</p>
+</div>
+<dl class="py function">
+<dt class="sig sig-object py" id="django.views.decorators.csp.csp_override">
+<span class="sig-name descname"><span class="pre">csp_override</span></span>(<em class="sig-param"><span class="n"><span class="pre">config)(view</span></span></em>)<a class="reference external" href="https://github.com/django/django/blob/stable/6.1.x/django/views/decorators/csp.py#L31"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#django.views.decorators.csp.csp_override" title="Link to this definition">¶</a></dt>
+<dd><p>Overrides the <code class="docutils literal notranslate"><span class="pre">Content-Security-Policy</span></code> header for the decorated view
+using directives in the same format as the <a class="reference internal" href="settings.html#std-setting-SECURE_CSP"><code class="xref std std-setting docutils literal notranslate"><span class="pre">SECURE_CSP</span></code></a> setting.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">config</span></code> argument must be a mapping with the desired CSP directives.
+If <code class="docutils literal notranslate"><span class="pre">config</span></code> is an empty mapping (<code class="docutils literal notranslate"><span class="pre">{}</span></code>), no CSP enforcement header will
+be added to the response returned by that view, effectively disabling CSP
+for that view.</p>
+<p>Examples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.http</span><span class="w"> </span><span class="kn">import</span> <span class="n">HttpResponse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.csp</span><span class="w"> </span><span class="kn">import</span> <span class="n">CSP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.views.decorators.csp</span><span class="w"> </span><span class="kn">import</span> <span class="n">csp_override</span>
+
+
+<span class="nd">@csp_override</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;default-src&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">CSP</span><span class="o">.</span><span class="n">SELF</span><span class="p">],</span>
+        <span class="s2">&quot;img-src&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">CSP</span><span class="o">.</span><span class="n">SELF</span><span class="p">,</span> <span class="s2">&quot;data:&quot;</span><span class="p">],</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">&quot;Custom Content-Security-Policy header applied&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@csp_override</span><span class="p">({})</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">my_other_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">&quot;No Content-Security-Policy header added&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="django.views.decorators.csp.csp_report_only_override">
+<span class="sig-name descname"><span class="pre">csp_report_only_override</span></span>(<em class="sig-param"><span class="n"><span class="pre">config)(view</span></span></em>)<a class="reference external" href="https://github.com/django/django/blob/stable/6.1.x/django/views/decorators/csp.py#L36"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#django.views.decorators.csp.csp_report_only_override" title="Link to this definition">¶</a></dt>
+<dd><p>Overrides the <code class="docutils literal notranslate"><span class="pre">Content-Security-Policy-Report-Only</span></code> header for the
+decorated view using directives in the same format as the
+<a class="reference internal" href="settings.html#std-setting-SECURE_CSP_REPORT_ONLY"><code class="xref std std-setting docutils literal notranslate"><span class="pre">SECURE_CSP_REPORT_ONLY</span></code></a> setting.</p>
+<p>Like <a class="reference internal" href="#django.views.decorators.csp.csp_override" title="django.views.decorators.csp.csp_override"><code class="xref py py-func docutils literal notranslate"><span class="pre">csp_override()</span></code></a>, the <code class="docutils literal notranslate"><span class="pre">config</span></code> argument must be a mapping with
+the desired CSP directives. If <code class="docutils literal notranslate"><span class="pre">config</span></code> is an empty mapping (<code class="docutils literal notranslate"><span class="pre">{}</span></code>), no
+CSP report-only header will be added to the response returned by that view,
+effectively disabling report-only CSP for that view.</p>
+<p>Examples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.http</span><span class="w"> </span><span class="kn">import</span> <span class="n">HttpResponse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.csp</span><span class="w"> </span><span class="kn">import</span> <span class="n">CSP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.views.decorators.csp</span><span class="w"> </span><span class="kn">import</span> <span class="n">csp_report_only_override</span>
+
+
+<span class="nd">@csp_report_only_override</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;default-src&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">CSP</span><span class="o">.</span><span class="n">SELF</span><span class="p">],</span>
+        <span class="s2">&quot;img-src&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">CSP</span><span class="o">.</span><span class="n">SELF</span><span class="p">,</span> <span class="s2">&quot;data:&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;report-uri&quot;</span><span class="p">:</span> <span class="s2">&quot;https://mysite.com/csp-report/&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">&quot;Custom Content-Security-Policy-Report-Only header applied&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@csp_report_only_override</span><span class="p">({})</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">my_other_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">&quot;No Content-Security-Policy-Report-Only header added&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<p>The examples above assume function-based views. For class-based views, see the
+<a class="reference internal" href="../topics/class-based-views/intro.html#id1"><span class="std std-ref">guide for decorating class-based views</span></a>.</p>
+</section>
+<section id="s-nonce-usage">
+<span id="s-csp-nonce"></span><span id="nonce-usage"></span><span id="csp-nonce"></span><h2>Nonce usage<a class="headerlink" href="#nonce-usage" title="Link to this heading">¶</a></h2>
+<p>A CSP nonce (“number used once”) is a unique, random value generated per HTTP
+response. Django supports nonces as a secure way to allow specific inline
+<code class="docutils literal notranslate"><span class="pre">&lt;script&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;style&gt;</span></code> elements to execute without relying on
+<code class="docutils literal notranslate"><span class="pre">'unsafe-inline'</span></code>.</p>
+<p>Nonces are enabled by including the special placeholder
+<a class="reference internal" href="#django.utils.csp.CSP.NONCE" title="django.utils.csp.CSP.NONCE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">NONCE</span></code></a> in the relevant directive(s) of your
+<a class="reference internal" href="#csp-settings"><span class="std std-ref">CSP settings</span></a>, such as <code class="docutils literal notranslate"><span class="pre">script-src</span></code> or <code class="docutils literal notranslate"><span class="pre">style-src</span></code>.
+When present, the
+<a class="reference internal" href="middleware.html#django.middleware.csp.ContentSecurityPolicyMiddleware" title="django.middleware.csp.ContentSecurityPolicyMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">ContentSecurityPolicyMiddleware</span></code></a>
+will generate a nonce and insert the corresponding <code class="docutils literal notranslate"><span class="pre">nonce-&lt;value&gt;</span></code> source
+expression into the CSP header.</p>
+<p>To use this nonce in templates, the
+<a class="reference internal" href="templates/api.html#django.template.context_processors.csp" title="django.template.context_processors.csp"><code class="xref py py-func docutils literal notranslate"><span class="pre">csp()</span></code></a> context processor needs to be
+enabled. It adds a <code class="docutils literal notranslate"><span class="pre">csp_nonce</span></code> variable to the template context.</p>
+<div class="versionchanged">
+<span class="title">Changed in Django 6.1:</span> <p>The <a class="reference internal" href="templates/builtins.html#std-templatetag-csp_nonce_attr"><code class="xref std std-ttag docutils literal notranslate"><span class="pre">csp_nonce_attr</span></code></a> template tag was added, including support for
+rendering <a class="reference internal" href="../topics/forms/media.html#django.forms.Media" title="django.forms.Media"><code class="xref py py-class docutils literal notranslate"><span class="pre">Media</span></code></a> objects.</p>
+</div>
+<p>For inline <code class="docutils literal notranslate"><span class="pre">&lt;script&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">&lt;style&gt;</span></code> elements, include the nonce directly
+using the context variable:</p>
+<div class="highlight-html+django notranslate"><div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">script</span> <span class="na">nonce</span><span class="o">=</span><span class="s">&quot;</span><span class="cp">{{</span> <span class="nv">csp_nonce</span> <span class="cp">}}</span><span class="s">&quot;</span><span class="p">&gt;</span>
+<span class="w">  </span><span class="c1">// This inline JavaScript will be allowed.</span>
+<span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+<p>For external <code class="docutils literal notranslate"><span class="pre">&lt;script</span> <span class="pre">src=&quot;...&quot;&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">&lt;link</span> <span class="pre">rel=&quot;stylesheet&quot;&gt;</span></code> elements,
+use the <a class="reference internal" href="templates/builtins.html#std-templatetag-csp_nonce_attr"><code class="xref std std-ttag docutils literal notranslate"><span class="pre">csp_nonce_attr</span></code></a> template tag:</p>
+<div class="highlight-html+django notranslate"><div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;/path/to/script.js&quot;</span> <span class="cp">{%</span> <span class="k">csp_nonce_attr</span> <span class="cp">%}</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">&quot;stylesheet&quot;</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;/path/to/style.css&quot;</span> <span class="cp">{%</span> <span class="k">csp_nonce_attr</span> <span class="cp">%}</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+<p>To render a <a class="reference internal" href="../topics/forms/media.html#django.forms.Media" title="django.forms.Media"><code class="xref py py-class docutils literal notranslate"><span class="pre">Media</span></code></a> object’s assets with the nonce
+applied, pass the object to the <a class="reference internal" href="templates/builtins.html#std-templatetag-csp_nonce_attr"><code class="xref std std-ttag docutils literal notranslate"><span class="pre">csp_nonce_attr</span></code></a> template tag:</p>
+<div class="highlight-html+django notranslate"><div class="highlight"><pre><span></span><span class="cp">{%</span> <span class="k">csp_nonce_attr</span> <span class="nv">form.media</span> <span class="cp">%}</span>
+</pre></div>
+</div>
+<p>The browser will only execute inline elements that include a <code class="docutils literal notranslate"><span class="pre">nonce=&lt;value&gt;</span></code>
+attribute matching the one specified in the <code class="docutils literal notranslate"><span class="pre">Content-Security-Policy</span></code> (or
+<code class="docutils literal notranslate"><span class="pre">Content-Security-Policy-Report-Only</span></code>) header. This mechanism provides
+fine-grained control over which inline code is allowed to run.</p>
+<p>If a template includes the CSP nonce but the policy does not include
+<a class="reference internal" href="#django.utils.csp.CSP.NONCE" title="django.utils.csp.CSP.NONCE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">NONCE</span></code></a>, the HTML will include a nonce attribute,
+but the header will lack the required source expression. In this case, the
+browser will block the inline script or style (or report it for report-only
+configurations).</p>
+<section id="s-nonce-generation-and-caching">
+<span id="nonce-generation-and-caching"></span><h3>Nonce generation and caching<a class="headerlink" href="#nonce-generation-and-caching" title="Link to this heading">¶</a></h3>
+<p>Django’s nonce generation is <strong>lazy</strong>: the middleware only generates a nonce if
+<code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">csp_nonce</span> <span class="pre">}}</span></code> is accessed during template rendering. This avoids
+unnecessary work for pages that do not use nonces.</p>
+<p>However, because nonces must be unique per request, extra care is needed when
+using full-page caching (e.g., Django’s cache middleware, CDN caching). Serving
+cached responses with previously generated nonces may result in reuse across
+users and requests. Although such responses may still appear to work (since the
+nonce in the CSP header and HTML content match), reuse defeats the purpose of
+the nonce and weakens security.</p>
+<p>To ensure nonce-based policies remain effective:</p>
+<ul class="simple">
+<li><p>Avoid caching full responses that include <code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">csp_nonce</span> <span class="pre">}}</span></code> or
+<a class="reference internal" href="templates/builtins.html#std-templatetag-csp_nonce_attr"><code class="xref std std-ttag docutils literal notranslate"><span class="pre">csp_nonce_attr</span></code></a>.</p></li>
+<li><p>If caching is necessary, use a strategy that injects a fresh nonce on each
+request, or consider refactoring your application to avoid inline scripts and
+styles altogether.</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Content Security Policy</a><ul>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#settings">Settings</a></li>
+<li><a class="reference internal" href="#policy-violation-reports">Policy violation reports</a></li>
+<li><a class="reference internal" href="#csp-constants">CSP constants</a></li>
+<li><a class="reference internal" href="#module-django.views.decorators.csp">Decorators</a></li>
+<li><a class="reference internal" href="#nonce-usage">Nonce usage</a><ul>
+<li><a class="reference internal" href="#nonce-generation-and-caching">Nonce generation and caching</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="contrib/syndication.html"
+                          title="previous chapter">The syndication feed framework</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="csrf.html"
+                          title="next chapter">Cross Site Request Forgery protection</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/ref/csp.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="contrib/syndication.html" title="The syndication feed framework">previous</a>
+     |
+    <a href="index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="csrf.html" title="Cross Site Request Forgery protection">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

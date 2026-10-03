@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Model forms &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../../_static/default.css?v=bf4d74af" />
+    <script src="../../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Formset Functions" href="formsets.html" />
+    <link rel="prev" title="Form fields" href="fields.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../genindex.html">Index</a>  |
+        <a title="Module index" href="../../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="fields.html" title="Form fields">previous</a>
+     |
+    <a href="../index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="formsets.html" title="Formset Functions">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="ref-forms-models">
+            
+  <section id="s-module-django.forms.models">
+<span id="s-model-forms"></span><span id="module-django.forms.models"></span><span id="model-forms"></span><h1>Model forms<a class="headerlink" href="#module-django.forms.models" title="Link to this heading">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">ModelForm</span></code> API reference. For introductory material about using a
+<code class="docutils literal notranslate"><span class="pre">ModelForm</span></code>, see the <a class="reference internal" href="../../topics/forms/modelforms.html"><span class="doc">Creating forms from models</span></a> topic guide.</p>
+<section id="s-model-form-meta-api">
+<span id="model-form-meta-api"></span><h2>Model form <code class="docutils literal notranslate"><span class="pre">Meta</span></code> API<a class="headerlink" href="#model-form-meta-api" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="django.forms.ModelFormOptions">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ModelFormOptions</span></span><a class="reference external" href="https://github.com/django/django/blob/stable/6.1.x/django/forms/models.py#L260"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#django.forms.ModelFormOptions" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>The <code class="docutils literal notranslate"><span class="pre">_meta</span></code> API is used to build forms that reflect a Django model. It is
+accessible through the <code class="docutils literal notranslate"><span class="pre">_meta</span></code> attribute of each model form, and is a
+<code class="docutils literal notranslate"><span class="pre">django.forms.models.ModelFormOptions</span></code> instance.</p>
+<p>The structure of the generated form can be customized by defining metadata
+options as attributes of an inner <code class="docutils literal notranslate"><span class="pre">Meta</span></code> class. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelForm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">myapp.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Book</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BookForm</span><span class="p">(</span><span class="n">ModelForm</span><span class="p">):</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Book</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;author&quot;</span><span class="p">]</span>
+        <span class="n">help_texts</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The title of the book&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;author&quot;</span><span class="p">:</span> <span class="s2">&quot;The author of the book&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="c1"># ... other attributes</span>
+</pre></div>
+</div>
+<p>Required attributes are <a class="reference internal" href="#django.forms.ModelFormOptions.model" title="django.forms.ModelFormOptions.model"><code class="xref py py-attr docutils literal notranslate"><span class="pre">model</span></code></a>, and either
+<a class="reference internal" href="#django.forms.ModelFormOptions.fields" title="django.forms.ModelFormOptions.fields"><code class="xref py py-attr docutils literal notranslate"><span class="pre">fields</span></code></a> or <a class="reference internal" href="#django.forms.ModelFormOptions.exclude" title="django.forms.ModelFormOptions.exclude"><code class="xref py py-attr docutils literal notranslate"><span class="pre">exclude</span></code></a>. All
+other <code class="docutils literal notranslate"><span class="pre">Meta</span></code> attributes are optional.</p>
+<p>Optional attributes, other than <a class="reference internal" href="#django.forms.ModelFormOptions.localized_fields" title="django.forms.ModelFormOptions.localized_fields"><code class="xref py py-attr docutils literal notranslate"><span class="pre">localized_fields</span></code></a> and
+<a class="reference internal" href="#django.forms.ModelFormOptions.formfield_callback" title="django.forms.ModelFormOptions.formfield_callback"><code class="xref py py-attr docutils literal notranslate"><span class="pre">formfield_callback</span></code></a>, expect a dictionary that maps a
+model field name to a value. Any field that is not defined in the dictionary
+falls back to the field’s default value.</p>
+<div class="admonition-invalid-field-names admonition">
+<p class="admonition-title">Invalid field names</p>
+<p>Invalid or excluded field names in an optional dictionary attribute have no
+effect, since fields that are not included are not accessed.</p>
+</div>
+<div class="admonition-invalid-meta-class-attributes admonition">
+<p class="admonition-title">Invalid Meta class attributes</p>
+<p>You may define any attribute on a <code class="docutils literal notranslate"><span class="pre">Meta</span></code> class. Typos or incorrect
+attribute names do not raise an error.</p>
+</div>
+<section id="s-error-messages">
+<span id="error-messages"></span><h3><code class="docutils literal notranslate"><span class="pre">error_messages</span></code><a class="headerlink" href="#error-messages" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.forms.ModelFormOptions.error_messages">
+<span class="sig-prename descclassname"><span class="pre">ModelFormOptions.</span></span><span class="sig-name descname"><span class="pre">error_messages</span></span><a class="headerlink" href="#django.forms.ModelFormOptions.error_messages" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary that maps a model field name to a dictionary of error message
+keys (<code class="docutils literal notranslate"><span class="pre">null</span></code>, <code class="docutils literal notranslate"><span class="pre">blank</span></code>, <code class="docutils literal notranslate"><span class="pre">invalid</span></code>, <code class="docutils literal notranslate"><span class="pre">unique</span></code>, etc.) mapped to custom
+error messages.</p>
+<p>When a field is not specified, Django will fall back on the error messages
+defined in that model field’s <a class="reference internal" href="../models/fields.html#django.db.models.Field.error_messages" title="django.db.models.Field.error_messages"><code class="xref py py-attr docutils literal notranslate"><span class="pre">django.db.models.Field.error_messages</span></code></a>
+and then finally on the default error messages for that field type.</p>
+</dd></dl>
+
+</section>
+<section id="s-exclude">
+<span id="exclude"></span><h3><code class="docutils literal notranslate"><span class="pre">exclude</span></code><a class="headerlink" href="#exclude" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.forms.ModelFormOptions.exclude">
+<span class="sig-prename descclassname"><span class="pre">ModelFormOptions.</span></span><span class="sig-name descname"><span class="pre">exclude</span></span><a class="headerlink" href="#django.forms.ModelFormOptions.exclude" title="Link to this definition">¶</a></dt>
+<dd><p>A tuple or list of <a class="reference internal" href="#django.forms.ModelFormOptions.model" title="django.forms.ModelFormOptions.model"><code class="xref py py-attr docutils literal notranslate"><span class="pre">model</span></code></a> field names to be
+excluded from the form.</p>
+<p>Either <a class="reference internal" href="#django.forms.ModelFormOptions.fields" title="django.forms.ModelFormOptions.fields"><code class="xref py py-attr docutils literal notranslate"><span class="pre">fields</span></code></a> or
+<a class="reference internal" href="#django.forms.ModelFormOptions.exclude" title="django.forms.ModelFormOptions.exclude"><code class="xref py py-attr docutils literal notranslate"><span class="pre">exclude</span></code></a> must be set. If neither are set, an
+<a class="reference internal" href="../exceptions.html#django.core.exceptions.ImproperlyConfigured" title="django.core.exceptions.ImproperlyConfigured"><code class="xref py py-class docutils literal notranslate"><span class="pre">ImproperlyConfigured</span></code></a> exception will be
+raised. If <a class="reference internal" href="#django.forms.ModelFormOptions.exclude" title="django.forms.ModelFormOptions.exclude"><code class="xref py py-attr docutils literal notranslate"><span class="pre">exclude</span></code></a> is set and
+<a class="reference internal" href="#django.forms.ModelFormOptions.fields" title="django.forms.ModelFormOptions.fields"><code class="xref py py-attr docutils literal notranslate"><span class="pre">fields</span></code></a> is unset, all model fields, except for
+those specified in <a class="reference internal" href="#django.forms.ModelFormOptions.exclude" title="django.forms.ModelFormOptions.exclude"><code class="xref py py-attr docutils literal notranslate"><span class="pre">exclude</span></code></a>, are included in the
+form.</p>
+</dd></dl>
+
+</section>
+<section id="s-field-classes">
+<span id="field-classes"></span><h3><code class="docutils literal notranslate"><span class="pre">field_classes</span></code><a class="headerlink" href="#field-classes" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.forms.ModelFormOptions.field_classes">
+<span class="sig-prename descclassname"><span class="pre">ModelFormOptions.</span></span><span class="sig-name descname"><span class="pre">field_classes</span></span><a class="headerlink" href="#django.forms.ModelFormOptions.field_classes" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary that maps a model field name to a <a class="reference internal" href="fields.html#django.forms.Field" title="django.forms.Field"><code class="xref py py-class docutils literal notranslate"><span class="pre">Field</span></code></a>
+class, which overrides the <code class="docutils literal notranslate"><span class="pre">form_class</span></code> used in the model field’s
+<a class="reference internal" href="../models/fields.html#django.db.models.Field.formfield" title="django.db.models.Field.formfield"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Field.formfield()</span></code></a> method.</p>
+<p>When a field is not specified, Django will fall back on the model field’s
+<a class="reference internal" href="../../topics/forms/modelforms.html#model-form-field-types"><span class="std std-ref">default field class</span></a>.</p>
+</dd></dl>
+
+</section>
+<section id="s-fields">
+<span id="fields"></span><h3><code class="docutils literal notranslate"><span class="pre">fields</span></code><a class="headerlink" href="#fields" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.forms.ModelFormOptions.fields">
+<span class="sig-prename descclassname"><span class="pre">ModelFormOptions.</span></span><span class="sig-name descname"><span class="pre">fields</span></span><a class="headerlink" href="#django.forms.ModelFormOptions.fields" title="Link to this definition">¶</a></dt>
+<dd><p>A tuple or list of <a class="reference internal" href="#django.forms.ModelFormOptions.model" title="django.forms.ModelFormOptions.model"><code class="xref py py-attr docutils literal notranslate"><span class="pre">model</span></code></a> field names to be
+included in the form. The value <code class="docutils literal notranslate"><span class="pre">'__all__'</span></code> can be used to specify that
+all fields should be included.</p>
+<p>If any field is specified in <a class="reference internal" href="#django.forms.ModelFormOptions.exclude" title="django.forms.ModelFormOptions.exclude"><code class="xref py py-attr docutils literal notranslate"><span class="pre">exclude</span></code></a>, this will
+not be included in the form despite being specified in
+<a class="reference internal" href="#django.forms.ModelFormOptions.fields" title="django.forms.ModelFormOptions.fields"><code class="xref py py-attr docutils literal notranslate"><span class="pre">fields</span></code></a>.</p>
+<p>Either <a class="reference internal" href="#django.forms.ModelFormOptions.fields" title="django.forms.ModelFormOptions.fields"><code class="xref py py-attr docutils literal notranslate"><span class="pre">fields</span></code></a> or
+<a class="reference internal" href="#django.forms.ModelFormOptions.exclude" title="django.forms.ModelFormOptions.exclude"><code class="xref py py-attr docutils literal notranslate"><span class="pre">exclude</span></code></a> must be set. If neither are set, an
+<a class="reference internal" href="../exceptions.html#django.core.exceptions.ImproperlyConfigured" title="django.core.exceptions.ImproperlyConfigured"><code class="xref py py-class docutils literal notranslate"><span class="pre">ImproperlyConfigured</span></code></a> exception will be
+raised.</p>
+</dd></dl>
+
+</section>
+<section id="s-formfield-callback">
+<span id="formfield-callback"></span><h3><code class="docutils literal notranslate"><span class="pre">formfield_callback</span></code><a class="headerlink" href="#formfield-callback" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.forms.ModelFormOptions.formfield_callback">
+<span class="sig-prename descclassname"><span class="pre">ModelFormOptions.</span></span><span class="sig-name descname"><span class="pre">formfield_callback</span></span><a class="headerlink" href="#django.forms.ModelFormOptions.formfield_callback" title="Link to this definition">¶</a></dt>
+<dd><p>A function or callable that takes a model field and returns a
+<a class="reference internal" href="fields.html#django.forms.Field" title="django.forms.Field"><code class="xref py py-class docutils literal notranslate"><span class="pre">django.forms.Field</span></code></a> object.</p>
+</dd></dl>
+
+</section>
+<section id="s-help-texts">
+<span id="help-texts"></span><h3><code class="docutils literal notranslate"><span class="pre">help_texts</span></code><a class="headerlink" href="#help-texts" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.forms.ModelFormOptions.help_texts">
+<span class="sig-prename descclassname"><span class="pre">ModelFormOptions.</span></span><span class="sig-name descname"><span class="pre">help_texts</span></span><a class="headerlink" href="#django.forms.ModelFormOptions.help_texts" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary that maps a model field name to a help text string.</p>
+<p>When a field is not specified, Django will fall back on that model field’s
+<a class="reference internal" href="../models/fields.html#django.db.models.Field.help_text" title="django.db.models.Field.help_text"><code class="xref py py-attr docutils literal notranslate"><span class="pre">help_text</span></code></a>.</p>
+</dd></dl>
+
+</section>
+<section id="s-labels">
+<span id="labels"></span><h3><code class="docutils literal notranslate"><span class="pre">labels</span></code><a class="headerlink" href="#labels" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.forms.ModelFormOptions.labels">
+<span class="sig-prename descclassname"><span class="pre">ModelFormOptions.</span></span><span class="sig-name descname"><span class="pre">labels</span></span><a class="headerlink" href="#django.forms.ModelFormOptions.labels" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary that maps a model field names to a label string.</p>
+<p>When a field is not specified, Django will fall back on that model field’s
+<a class="reference internal" href="../models/fields.html#django.db.models.Field.verbose_name" title="django.db.models.Field.verbose_name"><code class="xref py py-attr docutils literal notranslate"><span class="pre">verbose_name</span></code></a> and then the field’s attribute
+name.</p>
+</dd></dl>
+
+</section>
+<section id="s-localized-fields">
+<span id="localized-fields"></span><h3><code class="docutils literal notranslate"><span class="pre">localized_fields</span></code><a class="headerlink" href="#localized-fields" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.forms.ModelFormOptions.localized_fields">
+<span class="sig-prename descclassname"><span class="pre">ModelFormOptions.</span></span><span class="sig-name descname"><span class="pre">localized_fields</span></span><a class="headerlink" href="#django.forms.ModelFormOptions.localized_fields" title="Link to this definition">¶</a></dt>
+<dd><p>A tuple or list of <a class="reference internal" href="#django.forms.ModelFormOptions.model" title="django.forms.ModelFormOptions.model"><code class="xref py py-attr docutils literal notranslate"><span class="pre">model</span></code></a> field names to be
+localized. The value <code class="docutils literal notranslate"><span class="pre">'__all__'</span></code> can be used to specify that all fields
+should be localized.</p>
+<p>By default, form fields are not localized, see
+<a class="reference internal" href="../../topics/forms/modelforms.html#modelforms-enabling-localization-of-fields"><span class="std std-ref">enabling localization of fields</span></a> for more details.</p>
+</dd></dl>
+
+</section>
+<section id="s-model">
+<span id="model"></span><h3><code class="docutils literal notranslate"><span class="pre">model</span></code><a class="headerlink" href="#model" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.forms.ModelFormOptions.model">
+<span class="sig-prename descclassname"><span class="pre">ModelFormOptions.</span></span><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#django.forms.ModelFormOptions.model" title="Link to this definition">¶</a></dt>
+<dd><p>Required. The <a class="reference internal" href="../models/instances.html#django.db.models.Model" title="django.db.models.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">django.db.models.Model</span></code></a> to be used for the
+<a class="reference internal" href="../../topics/forms/modelforms.html#django.forms.ModelForm" title="django.forms.ModelForm"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelForm</span></code></a>.</p>
+</dd></dl>
+
+</section>
+<section id="s-widgets">
+<span id="widgets"></span><h3><code class="docutils literal notranslate"><span class="pre">widgets</span></code><a class="headerlink" href="#widgets" title="Link to this heading">¶</a></h3>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="django.forms.ModelFormOptions.widgets">
+<span class="sig-prename descclassname"><span class="pre">ModelFormOptions.</span></span><span class="sig-name descname"><span class="pre">widgets</span></span><a class="headerlink" href="#django.forms.ModelFormOptions.widgets" title="Link to this definition">¶</a></dt>
+<dd><p>A dictionary that maps a model field name to a
+<a class="reference internal" href="widgets.html#django.forms.Widget" title="django.forms.Widget"><code class="xref py py-class docutils literal notranslate"><span class="pre">django.forms.Widget</span></code></a>.</p>
+<p>When a field is not specified, Django will fall back on the default widget
+for that particular type of <a class="reference internal" href="../models/fields.html#django.db.models.Field" title="django.db.models.Field"><code class="xref py py-class docutils literal notranslate"><span class="pre">django.db.models.Field</span></code></a>.</p>
+</dd></dl>
+
+</section>
+</section>
+<section id="s-model-form-factory-functions">
+<span id="model-form-factory-functions"></span><h2>Model form factory functions<a class="headerlink" href="#model-form-factory-functions" title="Link to this heading">¶</a></h2>
+<section id="s-modelform-factory">
+<span id="modelform-factory"></span><h3><code class="docutils literal notranslate"><span class="pre">modelform_factory</span></code><a class="headerlink" href="#modelform-factory" title="Link to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="django.forms.models.modelform_factory">
+<span class="sig-name descname"><span class="pre">modelform_factory</span></span>(<em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">form</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ModelForm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formfield_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widgets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">localized_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">help_texts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_classes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>)<a class="reference external" href="https://github.com/django/django/blob/stable/6.1.x/django/forms/models.py#L589"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#django.forms.models.modelform_factory" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a <a class="reference internal" href="../../topics/forms/modelforms.html#django.forms.ModelForm" title="django.forms.ModelForm"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelForm</span></code></a> class for the given <code class="docutils literal notranslate"><span class="pre">model</span></code>.
+You can optionally pass a <code class="docutils literal notranslate"><span class="pre">form</span></code> argument to use as a starting point for
+constructing the <code class="docutils literal notranslate"><span class="pre">ModelForm</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">fields</span></code> is an optional list of field names. If provided, only the named
+fields will be included in the returned fields.</p>
+<p><code class="docutils literal notranslate"><span class="pre">exclude</span></code> is an optional list of field names. If provided, the named
+fields will be excluded from the returned fields, even if they are listed
+in the <code class="docutils literal notranslate"><span class="pre">fields</span></code> argument.</p>
+<p><code class="docutils literal notranslate"><span class="pre">formfield_callback</span></code> is a callable that takes a model field and returns
+a form field.</p>
+<p><code class="docutils literal notranslate"><span class="pre">widgets</span></code> is a dictionary of model field names mapped to a widget.</p>
+<p><code class="docutils literal notranslate"><span class="pre">localized_fields</span></code> is a list of names of fields which should be
+localized.</p>
+<p><code class="docutils literal notranslate"><span class="pre">labels</span></code> is a dictionary of model field names mapped to a label.</p>
+<p><code class="docutils literal notranslate"><span class="pre">help_texts</span></code> is a dictionary of model field names mapped to a help text.</p>
+<p><code class="docutils literal notranslate"><span class="pre">error_messages</span></code> is a dictionary of model field names mapped to a
+dictionary of error messages.</p>
+<p><code class="docutils literal notranslate"><span class="pre">field_classes</span></code> is a dictionary of model field names mapped to a form
+field class.</p>
+<p>See <a class="reference internal" href="../../topics/forms/modelforms.html#modelforms-factory"><span class="std std-ref">ModelForm factory function</span></a> for example usage.</p>
+<p>You must provide the list of fields explicitly, either via keyword
+arguments <code class="docutils literal notranslate"><span class="pre">fields</span></code> or <code class="docutils literal notranslate"><span class="pre">exclude</span></code>, or the corresponding attributes on the
+form’s inner <code class="docutils literal notranslate"><span class="pre">Meta</span></code> class. See <a class="reference internal" href="../../topics/forms/modelforms.html#modelforms-selecting-fields"><span class="std std-ref">Selecting the fields to use</span></a> for
+more information. Omitting any definition of the fields to use will result
+in an <a class="reference internal" href="../exceptions.html#django.core.exceptions.ImproperlyConfigured" title="django.core.exceptions.ImproperlyConfigured"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ImproperlyConfigured</span></code></a> exception.</p>
+</dd></dl>
+
+</section>
+<section id="s-modelformset-factory">
+<span id="modelformset-factory"></span><h3><code class="docutils literal notranslate"><span class="pre">modelformset_factory</span></code><a class="headerlink" href="#modelformset-factory" title="Link to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="django.forms.models.modelformset_factory">
+<span class="sig-name descname"><span class="pre">modelformset_factory</span></span>(<em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">form</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ModelForm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formfield_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">BaseModelFormSet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">can_delete</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">can_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widgets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">localized_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">help_texts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_classes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absolute_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">can_delete_extra</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">renderer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edit_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>)<a class="reference external" href="https://github.com/django/django/blob/stable/6.1.x/django/forms/models.py#L1040"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#django.forms.models.modelformset_factory" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a <code class="docutils literal notranslate"><span class="pre">FormSet</span></code> class for the given <code class="docutils literal notranslate"><span class="pre">model</span></code> class.</p>
+<p>Arguments <code class="docutils literal notranslate"><span class="pre">model</span></code>, <code class="docutils literal notranslate"><span class="pre">form</span></code>, <code class="docutils literal notranslate"><span class="pre">fields</span></code>, <code class="docutils literal notranslate"><span class="pre">exclude</span></code>,
+<code class="docutils literal notranslate"><span class="pre">formfield_callback</span></code>, <code class="docutils literal notranslate"><span class="pre">widgets</span></code>, <code class="docutils literal notranslate"><span class="pre">localized_fields</span></code>, <code class="docutils literal notranslate"><span class="pre">labels</span></code>,
+<code class="docutils literal notranslate"><span class="pre">help_texts</span></code>, <code class="docutils literal notranslate"><span class="pre">error_messages</span></code>, and <code class="docutils literal notranslate"><span class="pre">field_classes</span></code> are all passed
+through to <a class="reference internal" href="#django.forms.models.modelform_factory" title="django.forms.models.modelform_factory"><code class="xref py py-func docutils literal notranslate"><span class="pre">modelform_factory()</span></code></a>.</p>
+<p>Arguments <code class="docutils literal notranslate"><span class="pre">formset</span></code>, <code class="docutils literal notranslate"><span class="pre">extra</span></code>, <code class="docutils literal notranslate"><span class="pre">can_delete</span></code>, <code class="docutils literal notranslate"><span class="pre">can_order</span></code>,
+<code class="docutils literal notranslate"><span class="pre">max_num</span></code>, <code class="docutils literal notranslate"><span class="pre">validate_max</span></code>, <code class="docutils literal notranslate"><span class="pre">min_num</span></code>, <code class="docutils literal notranslate"><span class="pre">validate_min</span></code>,
+<code class="docutils literal notranslate"><span class="pre">absolute_max</span></code>, <code class="docutils literal notranslate"><span class="pre">can_delete_extra</span></code>, and <code class="docutils literal notranslate"><span class="pre">renderer</span></code> are passed
+through to <a class="reference internal" href="formsets.html#django.forms.formsets.formset_factory" title="django.forms.formsets.formset_factory"><code class="xref py py-func docutils literal notranslate"><span class="pre">formset_factory()</span></code></a>. See
+<a class="reference internal" href="../../topics/forms/formsets.html"><span class="doc">formsets</span></a> for details.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">edit_only</span></code> argument allows <a class="reference internal" href="../../topics/forms/modelforms.html#model-formsets-edit-only"><span class="std std-ref">preventing new objects creation</span></a>.</p>
+<p>See <a class="reference internal" href="../../topics/forms/modelforms.html#model-formsets"><span class="std std-ref">Model formsets</span></a> for example usage.</p>
+</dd></dl>
+
+</section>
+<section id="s-inlineformset-factory">
+<span id="inlineformset-factory"></span><h3><code class="docutils literal notranslate"><span class="pre">inlineformset_factory</span></code><a class="headerlink" href="#inlineformset-factory" title="Link to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="django.forms.models.inlineformset_factory">
+<span class="sig-name descname"><span class="pre">inlineformset_factory</span></span>(<em class="sig-param"><span class="n"><span class="pre">parent_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">form</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ModelForm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">BaseInlineFormSet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fk_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">can_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">can_delete</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formfield_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widgets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">localized_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">help_texts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_messages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_classes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absolute_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">can_delete_extra</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">renderer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edit_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>)<a class="reference external" href="https://github.com/django/django/blob/stable/6.1.x/django/forms/models.py#L1307"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#django.forms.models.inlineformset_factory" title="Link to this definition">¶</a></dt>
+<dd><p>Returns an <code class="docutils literal notranslate"><span class="pre">InlineFormSet</span></code> using <a class="reference internal" href="#django.forms.models.modelformset_factory" title="django.forms.models.modelformset_factory"><code class="xref py py-func docutils literal notranslate"><span class="pre">modelformset_factory()</span></code></a> with
+defaults of <code class="docutils literal notranslate"><span class="pre">formset=</span></code><a class="reference internal" href="../../topics/forms/modelforms.html#django.forms.models.BaseInlineFormSet" title="django.forms.models.BaseInlineFormSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseInlineFormSet</span></code></a>,
+<code class="docutils literal notranslate"><span class="pre">can_delete=True</span></code>, and <code class="docutils literal notranslate"><span class="pre">extra=3</span></code>.</p>
+<p>If your model has more than one <a class="reference internal" href="../models/fields.html#django.db.models.ForeignKey" title="django.db.models.ForeignKey"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to
+the <code class="docutils literal notranslate"><span class="pre">parent_model</span></code>, you must specify a <code class="docutils literal notranslate"><span class="pre">fk_name</span></code>.</p>
+<p>See <a class="reference internal" href="../../topics/forms/modelforms.html#inline-formsets"><span class="std std-ref">Inline formsets</span></a> for example usage.</p>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Model forms</a><ul>
+<li><a class="reference internal" href="#model-form-meta-api">Model form <code class="docutils literal notranslate"><span class="pre">Meta</span></code> API</a><ul>
+<li><a class="reference internal" href="#error-messages"><code class="docutils literal notranslate"><span class="pre">error_messages</span></code></a></li>
+<li><a class="reference internal" href="#exclude"><code class="docutils literal notranslate"><span class="pre">exclude</span></code></a></li>
+<li><a class="reference internal" href="#field-classes"><code class="docutils literal notranslate"><span class="pre">field_classes</span></code></a></li>
+<li><a class="reference internal" href="#fields"><code class="docutils literal notranslate"><span class="pre">fields</span></code></a></li>
+<li><a class="reference internal" href="#formfield-callback"><code class="docutils literal notranslate"><span class="pre">formfield_callback</span></code></a></li>
+<li><a class="reference internal" href="#help-texts"><code class="docutils literal notranslate"><span class="pre">help_texts</span></code></a></li>
+<li><a class="reference internal" href="#labels"><code class="docutils literal notranslate"><span class="pre">labels</span></code></a></li>
+<li><a class="reference internal" href="#localized-fields"><code class="docutils literal notranslate"><span class="pre">localized_fields</span></code></a></li>
+<li><a class="reference internal" href="#model"><code class="docutils literal notranslate"><span class="pre">model</span></code></a></li>
+<li><a class="reference internal" href="#widgets"><code class="docutils literal notranslate"><span class="pre">widgets</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#model-form-factory-functions">Model form factory functions</a><ul>
+<li><a class="reference internal" href="#modelform-factory"><code class="docutils literal notranslate"><span class="pre">modelform_factory</span></code></a></li>
+<li><a class="reference internal" href="#modelformset-factory"><code class="docutils literal notranslate"><span class="pre">modelformset_factory</span></code></a></li>
+<li><a class="reference internal" href="#inlineformset-factory"><code class="docutils literal notranslate"><span class="pre">inlineformset_factory</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="fields.html"
+                          title="previous chapter">Form fields</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="formsets.html"
+                          title="next chapter">Formset Functions</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/ref/forms/models.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="fields.html" title="Form fields">previous</a>
+     |
+    <a href="../index.html" title="API Reference" accesskey="U">up</a>
+   |
+    <a href="formsets.html" title="Formset Functions">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>

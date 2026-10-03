@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Django 6.0.8 release notes &#8212; Django 6.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=34bb78ad" />
+    <link rel="stylesheet" type="text/css" href="../_static/default.css?v=bf4d74af" />
+    <script src="../_static/documentation_options.js?v=d8874676"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Django 6.0.7 release notes" href="6.0.7.html" />
+    <link rel="prev" title="Django 6.0.9 release notes" href="6.0.9.html" />
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../index.html">Django 6.1 documentation</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../index.html">Home</a>  |
+        <a title="Table of contents" href="../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../genindex.html">Index</a>  |
+        <a title="Module index" href="../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    &laquo; <a href="6.0.9.html" title="Django 6.0.9 release notes">previous</a>
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="6.0.7.html" title="Django 6.0.7 release notes">next</a> &raquo;</div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="releases-6.0.8">
+            
+  <section id="s-django-6-0-8-release-notes">
+<span id="django-6-0-8-release-notes"></span><h1>Django 6.0.8 release notes<a class="headerlink" href="#django-6-0-8-release-notes" title="Link to this heading">¶</a></h1>
+<p><em>August 4, 2026</em></p>
+<p>Django 6.0.8 fixes one security issue with severity “high”, two security issues
+with severity “moderate”, one security issue with severity “low”, and several
+bugs in 6.0.7.</p>
+<section id="s-cve-2026-15307-server-side-file-write-and-request-forgery-via-spatial-lookups">
+<span id="cve-2026-15307-server-side-file-write-and-request-forgery-via-spatial-lookups"></span><h2>CVE-2026-15307: Server-side file-write and request forgery via spatial lookups<a class="headerlink" href="#cve-2026-15307-server-side-file-write-and-request-forgery-via-spatial-lookups" title="Link to this heading">¶</a></h2>
+<p>Spatial lookups allowed <code class="docutils literal notranslate"><span class="pre">str</span></code> and <code class="docutils literal notranslate"><span class="pre">dict</span></code> lookup values to be passed to
+<a class="reference internal" href="../ref/contrib/gis/gdal.html#django.contrib.gis.gdal.GDALRaster" title="django.contrib.gis.gdal.GDALRaster"><code class="xref py py-class docutils literal notranslate"><span class="pre">GDALRaster</span></code></a> when they represented rasters.
+Depending on the raster driver, this could write a file to disk (in some cases
+enabling remote code execution) or issue a network request as the Django
+process user. Because the admin changelist permits filtering via
+<a class="reference internal" href="../ref/contrib/admin/index.html#django.contrib.admin.ModelAdmin.lookup_allowed" title="django.contrib.admin.ModelAdmin.lookup_allowed"><code class="xref py py-meth docutils literal notranslate"><span class="pre">lookup_allowed()</span></code></a>, the flaw was reachable
+by staff users with view permission on any registered model containing a
+spatial field.</p>
+<p>The following types are now disallowed by spatial lookups:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">dict</span></code></p></li>
+<li><p>A <code class="docutils literal notranslate"><span class="pre">str</span></code> that is not a valid
+<a class="reference internal" href="../ref/contrib/gis/geos.html#django.contrib.gis.geos.GEOSGeometry" title="django.contrib.gis.geos.GEOSGeometry"><code class="xref py py-class docutils literal notranslate"><span class="pre">GEOSGeometry</span></code></a>, e.g. a serialized dictionary</p></li>
+</ul>
+<p>This is a backward incompatible change. As a reminder, all untrusted user input
+should be validated before use. For that reason, assignments to model fields
+are unaffected and still accept these input types.</p>
+<p>For guidance on how to keep using these types in spatial lookups, on validating
+untrusted input, and on further security considerations, see
+<a class="reference internal" href="../ref/contrib/gis/gdal.html#raster-security"><span class="std std-ref">raster security considerations</span></a>.</p>
+<p>This issue has severity “high” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security policy</span></a>.</p>
+</section>
+<section id="s-cve-2026-15337-potential-denial-of-service-vulnerability-in-check-for-language">
+<span id="cve-2026-15337-potential-denial-of-service-vulnerability-in-check-for-language"></span><h2>CVE-2026-15337: Potential denial-of-service vulnerability in <code class="docutils literal notranslate"><span class="pre">check_for_language()</span></code><a class="headerlink" href="#cve-2026-15337-potential-denial-of-service-vulnerability-in-check-for-language" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../ref/utils.html#django.utils.translation.check_for_language" title="django.utils.translation.check_for_language"><code class="xref py py-func docutils literal notranslate"><span class="pre">check_for_language()</span></code></a> was subject to a potential
+denial-of-service attack when checking many distinct, very long language codes.
+Each code was used as a key in an in-memory cache, consuming process memory.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">language</span></code> value reaches this function through the
+<a class="reference internal" href="../topics/i18n/translation.html#django.views.i18n.set_language" title="django.views.i18n.set_language"><code class="xref py py-func docutils literal notranslate"><span class="pre">django.views.i18n.set_language()</span></code></a> view (not active by default) from POST
+data. Since request data is limited by <a class="reference internal" href="../ref/settings.html#std-setting-DATA_UPLOAD_MAX_MEMORY_SIZE"><code class="xref std std-setting docutils literal notranslate"><span class="pre">DATA_UPLOAD_MAX_MEMORY_SIZE</span></code></a>
+and the cache is configured to store a maximum number of entries, the memory
+that could be consumed was bounded.</p>
+<p>To mitigate this vulnerability, language codes longer than 500 characters are
+now rejected before the cached lookup.</p>
+<p>This issue has severity “low” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security policy</span></a>.</p>
+</section>
+<section id="s-cve-2026-15830-potential-denial-of-service-vulnerability-via-nested-geometry-collections">
+<span id="cve-2026-15830-potential-denial-of-service-vulnerability-via-nested-geometry-collections"></span><h2>CVE-2026-15830: Potential denial-of-service vulnerability via nested geometry collections<a class="headerlink" href="#cve-2026-15830-potential-denial-of-service-vulnerability-via-nested-geometry-collections" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../ref/contrib/gis/geos.html#django.contrib.gis.geos.GEOSGeometry" title="django.contrib.gis.geos.GEOSGeometry"><code class="xref py py-class docutils literal notranslate"><span class="pre">GEOSGeometry</span></code></a> was subject to a potential
+denial-of-service attack when provided deeply nested <code class="docutils literal notranslate"><span class="pre">GEOMETRYCOLLECTION</span></code>
+objects, leading to a segmentation fault in GEOS. A maximum depth of 198
+<code class="docutils literal notranslate"><span class="pre">GEOMETRYCOLLECTION</span></code>s is now enforced for the well-known text (WKT) format,
+and a maximum number of 198 <code class="docutils literal notranslate"><span class="pre">GEOMETRYCOLLECTION</span></code>s in total (breadth and
+depth) is enforced for well-known binary (WKB).</p>
+<p><a class="reference internal" href="../ref/contrib/gis/db-api.html#spatial-lookups-intro"><span class="std std-ref">Lookups against spatial fields</span></a> and the
+<a class="reference internal" href="../ref/contrib/gis/forms-api.html#django.contrib.gis.forms.GeometryField" title="django.contrib.gis.forms.GeometryField"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeometryField</span></code></a> form field were also affected.</p>
+<p>The limit can be customized through the new <code class="docutils literal notranslate"><span class="pre">max_geom_collections</span></code> argument,
+available on <a class="reference internal" href="../ref/contrib/gis/geos.html#django.contrib.gis.geos.GEOSGeometry" title="django.contrib.gis.geos.GEOSGeometry"><code class="xref py py-class docutils literal notranslate"><span class="pre">GEOSGeometry</span></code></a>, the
+<a class="reference internal" href="../ref/contrib/gis/forms-api.html#django.contrib.gis.forms.Field.max_geom_collections" title="django.contrib.gis.forms.Field.max_geom_collections"><code class="xref py py-attr docutils literal notranslate"><span class="pre">form</span> <span class="pre">field</span></code></a>,
+and the <a class="reference internal" href="../ref/contrib/gis/model-api.html#django.contrib.gis.db.models.GeometryField.max_geom_collections" title="django.contrib.gis.db.models.GeometryField.max_geom_collections"><code class="xref py py-attr docutils literal notranslate"><span class="pre">model</span> <span class="pre">field</span></code></a>. The limit
+is not applied to GeoJSON inputs, as they were parsed by GDAL and are not
+affected.</p>
+<p>This issue has severity “moderate” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security
+policy</span></a>.</p>
+</section>
+<section id="s-cve-2026-15920-potential-cross-site-scripting-via-urlfield-values-in-the-admin">
+<span id="cve-2026-15920-potential-cross-site-scripting-via-urlfield-values-in-the-admin"></span><h2>CVE-2026-15920: Potential cross-site scripting via <code class="docutils literal notranslate"><span class="pre">URLField</span></code> values in the admin<a class="headerlink" href="#cve-2026-15920-potential-cross-site-scripting-via-urlfield-values-in-the-admin" title="Link to this heading">¶</a></h2>
+<p>The admin renders <a class="reference internal" href="../ref/models/fields.html#django.db.models.URLField" title="django.db.models.URLField"><code class="xref py py-class docutils literal notranslate"><span class="pre">URLField</span></code></a> values as clickable links
+on changelist views and read-only fields. The link was generated without
+validating the value as a safe URL, so a stored value using a potentially
+dangerous scheme was rendered as a link.</p>
+<p><code class="docutils literal notranslate"><span class="pre">URLField</span></code> values shown via <code class="docutils literal notranslate"><span class="pre">display_for_field</span></code> are now validated using
+<a class="reference internal" href="../ref/validators.html#django.core.validators.URLValidator" title="django.core.validators.URLValidator"><code class="xref py py-class docutils literal notranslate"><span class="pre">URLValidator</span></code></a> before a link is rendered, and
+displayed as plain text if validation is failed.</p>
+<p>This issue has severity “moderate” according to the <a class="reference internal" href="../internals/security.html#severity-levels"><span class="std std-ref">Django security
+policy</span></a>.</p>
+</section>
+<section id="s-bugfixes">
+<span id="bugfixes"></span><h2>Bugfixes<a class="headerlink" href="#bugfixes" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Fixed a regression in Django 6.0 that caused
+<a class="reference internal" href="../ref/models/querysets.html#django.db.models.query.QuerySet.bulk_create" title="django.db.models.query.QuerySet.bulk_create"><code class="xref py py-meth docutils literal notranslate"><span class="pre">bulk_create()</span></code></a> to crash on databases
+that support returning rows from bulk inserts when a related object providing
+the primary key was saved after assignment (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/37234">#37234</a>).</p></li>
+<li><p>Added compatibility for <code class="docutils literal notranslate"><span class="pre">sqlparse</span></code> 0.5.5 (<a class="extlink-ticket reference external" href="https://code.djangoproject.com/ticket/37235">#37235</a>).</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../contents.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Django 6.0.8 release notes</a><ul>
+<li><a class="reference internal" href="#cve-2026-15307-server-side-file-write-and-request-forgery-via-spatial-lookups">CVE-2026-15307: Server-side file-write and request forgery via spatial lookups</a></li>
+<li><a class="reference internal" href="#cve-2026-15337-potential-denial-of-service-vulnerability-in-check-for-language">CVE-2026-15337: Potential denial-of-service vulnerability in <code class="docutils literal notranslate"><span class="pre">check_for_language()</span></code></a></li>
+<li><a class="reference internal" href="#cve-2026-15830-potential-denial-of-service-vulnerability-via-nested-geometry-collections">CVE-2026-15830: Potential denial-of-service vulnerability via nested geometry collections</a></li>
+<li><a class="reference internal" href="#cve-2026-15920-potential-cross-site-scripting-via-urlfield-values-in-the-admin">CVE-2026-15920: Potential cross-site scripting via <code class="docutils literal notranslate"><span class="pre">URLField</span></code> values in the admin</a></li>
+<li><a class="reference internal" href="#bugfixes">Bugfixes</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="6.0.9.html"
+                          title="previous chapter">Django 6.0.9 release notes</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="6.0.7.html"
+                          title="next chapter">Django 6.0.7 release notes</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/releases/6.0.8.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">Oct 02, 2026</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    &laquo; <a href="6.0.9.html" title="Django 6.0.9 release notes">previous</a>
+     |
+    <a href="index.html" title="Release notes" accesskey="U">up</a>
+   |
+    <a href="6.0.7.html" title="Django 6.0.7 release notes">next</a> &raquo;</div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>
